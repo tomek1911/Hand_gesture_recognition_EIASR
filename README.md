@@ -5,5 +5,12 @@ Computer Science Master's Program - Image and Speech Recognition - Warsaw Univer
 In our project we are supposed to create a hand gesture recognition program.
 
 # We are going to use prepared by us ASL gestures dataset.
-![image](https://github.com/tomek1911/Hand_gesture_recognition_EIASR/main/Plots and grapphs/barPlotSignCount.png?raw=true "Title")
+<p align="center">
+<img src="https://github.com/tomek1911/Hand_gesture_recognition_EIASR/blob/main/Plots/datasetSample.png">
+</p>
+
+Dataset contains 580 images gathered indepentely from 3 people. Dataset is well balanced - each class is represented by similar number of samples. We don't analyse 'J' and 'Z' gestures because they are not static - they require movement of hand.
+<p align="center">
+<img src="https://github.com/tomek1911/Hand_gesture_recognition_EIASR/blob/main/Plots/barPlotSignCount.png">
+</p>
 
