@@ -5,7 +5,9 @@ Computer Science Master's Program - Image and Speech Recognition - Warsaw Univer
 In our project we are supposed to create a hand gesture recognition program.
 
 # We are going to use prepared by us ASL gestures dataset.
-![dataset_sample](https://github.com/tomek1911/Hand_gesture_recognition_EIASR/blob/main/Plots/datasetSample.png?raw=true)
+<p align="center">
+<img src="https://github.com/tomek1911/Hand_gesture_recognition_EIASR/blob/main/Plots/datasetSample.png">
+</p>
 
 Dataset contains 580 images gathered indepentely from 3 people. Dataset is well balanced - each class is represented by simmilar number of samples.
 <p align="center">
