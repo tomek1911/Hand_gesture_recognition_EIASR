@@ -9,7 +9,7 @@ In our project we are supposed to create a hand gesture recognition program.
 <img src="https://github.com/tomek1911/Hand_gesture_recognition_EIASR/blob/main/Plots/datasetSample.png">
 </p>
 
-Dataset contains 580 images gathered indepentely from 3 people. Dataset is well balanced - each class is represented by simmilar number of samples.
+Dataset contains 580 images gathered indepentely from 3 people. Dataset is well balanced - each class is represented by similar number of samples.
 <p align="center">
 <img src="https://github.com/tomek1911/Hand_gesture_recognition_EIASR/blob/main/Plots/barPlotSignCount.png">
 </p>
