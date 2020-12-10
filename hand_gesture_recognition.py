@@ -16,6 +16,7 @@ img_list = os.listdir(dataset_dir)
 print ("Dataset contains: ",len(img_list), "images.")
 
 #analyse dataset
+#create csv file with paths and class labels
 
 gestures_dict = dict.fromkeys(string.ascii_uppercase, 0)
 dataset = []
@@ -42,6 +43,8 @@ gestDict_counts = gestures_dict.values()
 
 y_classesCount = np.arange(len(gestDict_classes))
 
+# create bar chart - count samples for classes
+
 plt.bar(y_classesCount, gestDict_counts, align='center', alpha=0.5)
 plt.xticks(y_classesCount, gestDict_classes)
 plt.ylabel('Count')
@@ -49,7 +52,9 @@ plt.xlabel('Sign')
 plt.title('Number of samples for each class')
 plt.savefig(plot_dir + "//barPlotSignCount.png")
 
-#create image samples with labels chart
+#create summary: image samples with labels 
+#one image for each class - images are downsized 
+
 aslAphabet = list(string.ascii_uppercase)
 aslAphabet.remove('J')
 aslAphabet.remove('Z')
@@ -62,8 +67,6 @@ for sign in aslAphabet:
    img_resizedRGB = cv2.cvtColor(img_resized,cv2.COLOR_BGR2RGB)
    sampleImages.append(img_resizedRGB)    
 
-
-
 fig=plt.figure(figsize=(8, 8))
 plt.suptitle("Examples from our dataset for each of signs")
 columns = 4
@@ -73,6 +76,8 @@ for i in range(1, columns*rows +1):
     fig.add_subplot(rows, columns, i, xticks=[], yticks=[], title=aslAphabet[i-1])
     plt.imshow(sampleImages[i-1])
 plt.savefig(plot_dir + "//datasetSample.png")
+
+
 
 
 
