@@ -9,7 +9,7 @@ import csv
 
 dir = os.getcwd()
 dataset_dir = os.path.join(dir, "Data")
-plot_dir = os.path.join(dir, "Plots and graphs")
+plot_dir = os.path.join(dir, "Plots")
 
 
 img_list = os.listdir(dataset_dir) 
