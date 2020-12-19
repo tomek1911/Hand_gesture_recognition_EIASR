@@ -22,12 +22,13 @@ class SkinSegmentation:
 
         @dataclass
         class YCBCR_Threshold:
-            Y_min: int = 80
+            Y_min: int = 50 #Blue channel [0]
             Y_max: int = 255
-            Cb_min: int = 85
-            Cb_max: int = 135
-            Cr_min: int = 135
+            Cr_min: int = 140 #Green channel [1]
             Cr_max: int = 180
+            Cb_min: int = 60 # Red channel [2]
+            Cb_max: int = 130
+
 
         @dataclass
         class YUV_Threshold:

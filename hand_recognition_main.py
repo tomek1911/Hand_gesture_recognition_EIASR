@@ -6,6 +6,16 @@ from enum import Enum
 from data_preprocessing import DataPreprocessing
 from feature_extraction import FeatureExtraction
 
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '#', printEnd = "\r"):
+
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+   
+    # Print New Line on Complete
+    if iteration == total: 
+        print()
 
 class DataLoader:
     """Class to load data from dataset."""
@@ -93,10 +103,14 @@ def main():
     #set path to save processed images 
     outPut_dir = os.path.join(dLoader_obj.project_dir,"Processed") 
 
+    printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
     for i in range(0,len(dLoader_obj.imagesList_dir)):
         img = dLoader_obj.loadImageCv(i)
         resized_img = DataPreprocessing.resizeImage(img,120)
-        DataPreprocessing.save_image(resized_img,dLoader_obj.dataset_array[i],"ResizedImages",outPut_dir)
+        DataPreprocessing.save_image(resized_img,dLoader_obj.dataset_array[i],"ResizedImages",outPut_dir,95)
+        printProgressBar(i + 1, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
     
     # dPrep_obj = DataPreprocessing(dLoader_obj.imagesList_cv, dLoader_obj.dataset_array[0:imgNum], outPut_dir)
 
