@@ -61,17 +61,17 @@ class DataPreprocessing:
             # aspect = longEd / shortEd
             resizeRatio = shortEd / shortEdgeLength
 
-            newLongEdgeLegth = round (longEd / resizeRatio) 
-
-            
+            newLongEdgeLegth = round (longEd / resizeRatio)            
 
             for img in self.imagesList_toProcess:
                 img_resized = cv2.resize(img,(shortEdgeLength,newLongEdgeLegth),interpolation=cv2.INTER_AREA)        
                 resized_images.append(img_resized)
         
         return resized_images
+
+   
         
-    def save_processed(self, processedImages, folderName, quality):
+    def save_processed_images(self, processedImages, folderName, quality):
         for img, imgData in zip(processedImages, self.imagesDetails):
             filename = imgData[1]+"_"+imgData[2]+"_"+imgData[3][0]+".jpg"
             imwrite_dir = os.path.join(self.output_dir,folderName)
@@ -82,6 +82,33 @@ class DataPreprocessing:
             else:
                 os.makedirs(imwrite_dir)
                 cv2.imwrite(imwrite_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
+    @staticmethod
+    def save_image(image, imgData, folderName, output_dir, quality=80):
+        sufix = ''
+        if imgData[3] == "Oleksandr_2":
+            sufix = '2'
+        filename = imgData[1]+"_"+imgData[2]+"_"+imgData[3][0]+sufix+".jpg"
+
+        imwrite_dir = os.path.join(output_dir, folderName)
+        imwrite_path = os.path.join(imwrite_dir, filename)
+        if not os.path.isdir(imwrite_dir):
+            os.makedirs(imwrite_dir)     
+        cv2.imwrite(imwrite_path, image, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
+    
+    @staticmethod 
+    def resizeImage(image, shortEdgeLength):
+        rows,cols,_ = image.shape
+
+        shortEdge = min(rows,cols)
+        longEdge = max(rows, cols) 
+        resizeRatio = shortEdge / shortEdgeLength
+        newLongEdgeLegth = round (longEdge / resizeRatio) 
+        if newLongEdgeLegth > longEdge:
+            img_resized = cv2.resize(image,(shortEdgeLength,newLongEdgeLegth),interpolation=cv2.INTER_CUBIC) #enlarge 
+        else:
+            img_resized = cv2.resize(image,(shortEdgeLength,newLongEdgeLegth),interpolation=cv2.INTER_AREA) #shrink     
+        return img_resized 
+
 
     def skinDetection(self, colorSpace, image):
 

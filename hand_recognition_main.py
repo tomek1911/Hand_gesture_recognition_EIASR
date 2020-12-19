@@ -62,6 +62,12 @@ class DataLoader:
         else:
             print("List of images to load is empty or images are already loaded")
 
+    def loadImageCv(self,id):
+        if self.imagesList_dir:
+            path = self.dataset_dir+"//"+self.imagesList_dir[id]
+            if os.path.exists(path):
+                return cv2.imread(path)    
+
     def __init__(self, datasetFolder):
                
         self.project_dir = os.getcwd()
@@ -76,32 +82,38 @@ def main():
     #Describe images - filename, class, author
     dLoader_obj.describeLoadedData()
 
-    #print first
+    #print first 10    
     print(*dLoader_obj.dataset_array[0:10], sep="\n")
-
+    
     #load images as opencv Mat 
     imgNum = 1
     dLoader_obj.loadImagesCv(imgNum)
-        
-    #setup preprocessing
-    #Defalut path to save processed images
-    outPut_dir = os.path.join(dLoader_obj.project_dir,"Processed")
-    dPrep_obj = DataPreprocessing(dLoader_obj.imagesList_cv, dLoader_obj.dataset_array[0:imgNum], outPut_dir)
 
-    #resize images (scale_down) and save to file
-    shortEdgeLength = 120
-    resizedImages = dPrep_obj.resizeImages(shortEdgeLength)
+    #load images one by one, resize and save
+    #set path to save processed images 
+    outPut_dir = os.path.join(dLoader_obj.project_dir,"Processed") 
 
-    #save resized images to file for further processing
-    dPrep_obj.save_processed(resizedImages, "ResizedImages",80)
+    for i in range(0,len(dLoader_obj.imagesList_dir)):
+        img = dLoader_obj.loadImageCv(i)
+        resized_img = DataPreprocessing.resizeImage(img,120)
+        DataPreprocessing.save_image(resized_img,dLoader_obj.dataset_array[i],"ResizedImages",outPut_dir)
+    
+    # dPrep_obj = DataPreprocessing(dLoader_obj.imagesList_cv, dLoader_obj.dataset_array[0:imgNum], outPut_dir)
 
-    #skin detection for segmentation
-    COLORSPACE = Enum('Colorspace', 'HSV YUV YCBCR') 
-    _, tresh = dPrep_obj.skinDetection(COLORSPACE.HSV,resizedImages[0])
+    # #resize images (scale_down) and save to file
+    # shortEdgeLength = 120
+    # resizedImages = dPrep_obj.resizeImages(shortEdgeLength)
 
-    cv2.imshow("treshHsv", tresh)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # #save resized images to file for further processing
+    # dPrep_obj.save_processed_images(resizedImages, "ResizedImages",80)
+
+    # #skin detection for segmentation
+    # COLORSPACE = Enum('Colorspace', 'HSV YUV YCBCR') 
+    # _, tresh = dPrep_obj.skinDetection(COLORSPACE.HSV,resizedImages[0])
+
+    # cv2.imshow("treshHsv", tresh)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
