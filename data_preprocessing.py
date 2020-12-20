@@ -26,8 +26,8 @@ class SkinSegmentation:
             Y_max: int = 255
             Cr_min: int = 140 #Green channel [1]
             Cr_max: int = 180
-            Cb_min: int = 60 # Red channel [2]
-            Cb_max: int = 130
+            Cb_min: int = 95 # Red channel [2]
+            Cb_max: int = 125
 
 
         @dataclass

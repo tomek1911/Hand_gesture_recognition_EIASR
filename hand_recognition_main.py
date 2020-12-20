@@ -93,25 +93,73 @@ def main():
     dLoader_obj.describeLoadedData()
 
     #print first 10    
-    print(*dLoader_obj.dataset_array[0:10], sep="\n")
+    print(*dLoader_obj.dataset_array[0:20], sep="\n")
     
     #load images as opencv Mat 
-    imgNum = 1
+    imgNum = 20
     dLoader_obj.loadImagesCv(imgNum)
 
     #load images one by one, resize and save
     #set path to save processed images 
     outPut_dir = os.path.join(dLoader_obj.project_dir,"Processed") 
 
-    printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+    title_window = "Test slider"
+    slider_maxH = 255
+    slider_maxS = 255
+    slider_maxV = 255
 
-    for i in range(0,len(dLoader_obj.imagesList_dir)):
-        img = dLoader_obj.loadImageCv(i)
-        resized_img = DataPreprocessing.resizeImage(img,120)
-        DataPreprocessing.save_image(resized_img,dLoader_obj.dataset_array[i],"ResizedImages",outPut_dir,95)
-        printProgressBar(i + 1, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+    image = dLoader_obj.imagesList_cv[8]
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
 
+    tNameCh1_low = 'Ch1_low'
+    tNameCh1_high = 'Ch1_high'
+    tNameCh2_low = 'Ch2_low'
+    tNameCh2_high = 'Ch2_high'
+    tNameCh3_low = 'Ch3_low'
+    tNameCh3_high = 'Ch3_high'
     
+    def on_trackbar(val):
+        ch1_low_slider=cv2.getTrackbarPos(tNameCh1_low, title_window)
+        ch1_high_slider=cv2.getTrackbarPos(tNameCh1_high, title_window)
+        ch2_low_slider=cv2.getTrackbarPos(tNameCh2_low, title_window)
+        ch2_high_slider=cv2.getTrackbarPos(tNameCh2_high, title_window)
+        ch3_low_slider=cv2.getTrackbarPos(tNameCh3_low, title_window)
+        ch3_high_slider=cv2.getTrackbarPos(tNameCh3_high, title_window)
+
+        lowerBound = (ch1_low_slider,  ch2_low_slider, ch3_low_slider)
+        upperBound = (ch1_high_slider,  ch2_high_slider, ch3_high_slider)
+        img_tresholded = cv2.inRange(image, lowerBound,  upperBound)
+        cv2.imshow(title_window,img_tresholded)
+
+
+    cv2.namedWindow(title_window,cv2.WINDOW_NORMAL & cv2.WINDOW_GUI_EXPANDED)
+    cv2.imshow(title_window,image)
+
+    cv2.createTrackbar(tNameCh1_low, title_window , 0, slider_maxH, on_trackbar)
+    cv2.createTrackbar(tNameCh1_high, title_window , 0, slider_maxH, on_trackbar)
+    cv2.createTrackbar(tNameCh2_low, title_window , 0, slider_maxS, on_trackbar)
+    cv2.createTrackbar(tNameCh2_high, title_window , 0, slider_maxS, on_trackbar)
+    cv2.createTrackbar(tNameCh3_low, title_window , 0, slider_maxV, on_trackbar)
+    cv2.createTrackbar(tNameCh3_high, title_window , 0, slider_maxV, on_trackbar)
+
+    cv2.setTrackbarPos(tNameCh1_low, title_window,50)
+    cv2.setTrackbarPos(tNameCh1_high, title_window,255)
+    cv2.setTrackbarPos(tNameCh2_low, title_window,140)
+    cv2.setTrackbarPos(tNameCh2_high, title_window,180)
+    cv2.setTrackbarPos(tNameCh3_low, title_window,60)
+    cv2.setTrackbarPos(tNameCh3_high, title_window,130)
+
+    cv2.waitKey(0)
+    cv2.destroyAllWindows() 
+
+    # printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+    # for i in range(0,len(dLoader_obj.imagesList_dir)):
+    #     img = dLoader_obj.loadImageCv(i)
+    #     resized_img = DataPreprocessing.resizeImage(img,120)
+    #     DataPreprocessing.save_image(resized_img,dLoader_obj.dataset_array[i],"ResizedImages",outPut_dir,95)
+    #     printProgressBar(i + 1, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+    #     
     # dPrep_obj = DataPreprocessing(dLoader_obj.imagesList_cv, dLoader_obj.dataset_array[0:imgNum], outPut_dir)
 
     # #resize images (scale_down) and save to file
