@@ -50,6 +50,12 @@ class FeatureExtraction:
         features_dict['line_slope'] = line_slope
 
         return features_dict
+    
+    def featureDict2x(feat_dict):
+        x = []
+        for feat in list(feat_dict.values()):
+            x.append(feat)
+        return x
 
     def __init__(self):
         pass
