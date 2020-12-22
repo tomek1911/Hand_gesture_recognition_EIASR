@@ -95,6 +95,16 @@ class DataPreprocessing:
         if not os.path.isdir(imwrite_dir):
             os.makedirs(imwrite_dir)     
         cv2.imwrite(imwrite_path, image, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
+
+    @staticmethod
+    def save_image2(image, imgName, folderName, output_dir, quality=80):
+
+        filename = imgName+".jpg"
+        imwrite_dir = os.path.join(output_dir, folderName)
+        imwrite_path = os.path.join(imwrite_dir, filename)
+        if not os.path.isdir(imwrite_dir):
+            os.makedirs(imwrite_dir)     
+        cv2.imwrite(imwrite_path, image, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
     
     @staticmethod 
     def resizeImage(image, shortEdgeLength):
@@ -147,6 +157,33 @@ class DataPreprocessing:
             upperBound = (thr.Y_max, thr.Cr_max, thr.Cb_max)
             img_cvt_tresholded = cv2.inRange(img_cvt, lowerBound,  upperBound)
             return img_cvt, img_cvt_tresholded
+
+    @staticmethod
+    def tresholdImageYCBCR(imageBGR):
+
+        Y_min = 30 #Blue channel [0]
+        Y_max = 255
+        Cr_min = 139 #Green channel [1]
+        Cr_max = 180
+        Cb_min = 93 # Red channel [2]
+        Cb_max = 127
+
+        img_cvt = cv2.cvtColor(imageBGR, cv2.COLOR_BGR2YCrCb)
+
+        lowerBound = (Y_min, Cr_min, Cb_min)
+        upperBound = (Y_max, Cr_max, Cb_max)
+        
+        img_cvt_tresholded = cv2.inRange(img_cvt, lowerBound, upperBound)
+
+        return img_cvt_tresholded       
+    
+    @staticmethod
+    def morphologicFiltering(img,size):
+        kernel = np.ones(size, np.uint8)
+        img_open = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
+        img_open_close = cv2.morphologyEx(img_open, cv2.MORPH_CLOSE, kernel)
+        return img_open_close
+   
       
 
 

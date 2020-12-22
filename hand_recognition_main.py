@@ -3,8 +3,8 @@ import numpy as np
 import cv2
 from enum import Enum
 
-from data_preprocessing import DataPreprocessing
-from feature_extraction import FeatureExtraction
+from data_preprocessing import DataPreprocessing as dp
+from feature_extraction import FeatureExtraction as fe
 
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '#', printEnd = "\r"):
 
@@ -76,13 +76,69 @@ class DataLoader:
         if self.imagesList_dir:
             path = self.dataset_dir+"//"+self.imagesList_dir[id]
             if os.path.exists(path):
-                return cv2.imread(path)    
+                return cv2.imread(path)   
+
+    def loadImageCvGray(self,id):
+        if self.imagesList_dir:
+            path = self.dataset_dir+"//"+self.imagesList_dir[id]
+            if os.path.exists(path):
+                return cv2.imread(path,cv2.IMREAD_GRAYSCALE)   
 
     def __init__(self, datasetFolder):
                
         self.project_dir = os.getcwd()
         self.dataset_dir = os.path.join(self.project_dir, datasetFolder) 
         self.getImagesToLoad()
+
+    @staticmethod
+    def manualTresholdTester(image):
+    
+        title_window = "Test slider"
+        slider_maxH = 255
+        slider_maxS = 255
+        slider_maxV = 255
+
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
+
+        tNameCh1_low = 'Ch1_low'
+        tNameCh1_high = 'Ch1_high'
+        tNameCh2_low = 'Ch2_low'
+        tNameCh2_high = 'Ch2_high'
+        tNameCh3_low = 'Ch3_low'
+        tNameCh3_high = 'Ch3_high'
+        
+        def on_trackbar(val):
+            ch1_low_slider=cv2.getTrackbarPos(tNameCh1_low, title_window)
+            ch1_high_slider=cv2.getTrackbarPos(tNameCh1_high, title_window)
+            ch2_low_slider=cv2.getTrackbarPos(tNameCh2_low, title_window)
+            ch2_high_slider=cv2.getTrackbarPos(tNameCh2_high, title_window)
+            ch3_low_slider=cv2.getTrackbarPos(tNameCh3_low, title_window)
+            ch3_high_slider=cv2.getTrackbarPos(tNameCh3_high, title_window)
+
+            lowerBound = (ch1_low_slider,  ch2_low_slider, ch3_low_slider)
+            upperBound = (ch1_high_slider,  ch2_high_slider, ch3_high_slider)
+            img_tresholded = cv2.inRange(image, lowerBound,  upperBound)
+            cv2.imshow(title_window,img_tresholded)
+
+        cv2.namedWindow(title_window,cv2.WINDOW_NORMAL & cv2.WINDOW_GUI_EXPANDED)
+        cv2.imshow(title_window,image)
+
+        cv2.createTrackbar(tNameCh1_low, title_window , 0, slider_maxH, on_trackbar)
+        cv2.createTrackbar(tNameCh1_high, title_window , 0, slider_maxH, on_trackbar)
+        cv2.createTrackbar(tNameCh2_low, title_window , 0, slider_maxS, on_trackbar)
+        cv2.createTrackbar(tNameCh2_high, title_window , 0, slider_maxS, on_trackbar)
+        cv2.createTrackbar(tNameCh3_low, title_window , 0, slider_maxV, on_trackbar)
+        cv2.createTrackbar(tNameCh3_high, title_window , 0, slider_maxV, on_trackbar)
+
+        cv2.setTrackbarPos(tNameCh1_low, title_window,50)
+        cv2.setTrackbarPos(tNameCh1_high, title_window,255)
+        cv2.setTrackbarPos(tNameCh2_low, title_window,140)
+        cv2.setTrackbarPos(tNameCh2_high, title_window,180)
+        cv2.setTrackbarPos(tNameCh3_low, title_window,60)
+        cv2.setTrackbarPos(tNameCh3_high, title_window,130)
+
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()     
 
 
 def main():
@@ -96,80 +152,105 @@ def main():
     print(*dLoader_obj.dataset_array[0:20], sep="\n")
     
     #load images as opencv Mat 
-    imgNum = 20
+    imgNum = 1
     dLoader_obj.loadImagesCv(imgNum)
 
     #load images one by one, resize and save
     #set path to save processed images 
-    outPut_dir = os.path.join(dLoader_obj.project_dir,"Processed") 
+    outPut_dir = os.path.join(dLoader_obj.project_dir,"Processed")    
 
-    title_window = "Test slider"
-    slider_maxH = 255
-    slider_maxS = 255
-    slider_maxV = 255
-
-    image = dLoader_obj.imagesList_cv[8]
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
-
-    tNameCh1_low = 'Ch1_low'
-    tNameCh1_high = 'Ch1_high'
-    tNameCh2_low = 'Ch2_low'
-    tNameCh2_high = 'Ch2_high'
-    tNameCh3_low = 'Ch3_low'
-    tNameCh3_high = 'Ch3_high'
+    #Test tresholds for data_processing
     
-    def on_trackbar(val):
-        ch1_low_slider=cv2.getTrackbarPos(tNameCh1_low, title_window)
-        ch1_high_slider=cv2.getTrackbarPos(tNameCh1_high, title_window)
-        ch2_low_slider=cv2.getTrackbarPos(tNameCh2_low, title_window)
-        ch2_high_slider=cv2.getTrackbarPos(tNameCh2_high, title_window)
-        ch3_low_slider=cv2.getTrackbarPos(tNameCh3_low, title_window)
-        ch3_high_slider=cv2.getTrackbarPos(tNameCh3_high, title_window)
+    # image = dLoader_obj.imagesList_cv[8]
+    # DataLoader.manualTresholdTester(image)
 
-        lowerBound = (ch1_low_slider,  ch2_low_slider, ch3_low_slider)
-        upperBound = (ch1_high_slider,  ch2_high_slider, ch3_high_slider)
-        img_tresholded = cv2.inRange(image, lowerBound,  upperBound)
-        cv2.imshow(title_window,img_tresholded)
+    ##########################################################################################################################
+    #RESIZE
 
 
-    cv2.namedWindow(title_window,cv2.WINDOW_NORMAL & cv2.WINDOW_GUI_EXPANDED)
-    cv2.imshow(title_window,image)
+    # if False:
+    #     printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
-    cv2.createTrackbar(tNameCh1_low, title_window , 0, slider_maxH, on_trackbar)
-    cv2.createTrackbar(tNameCh1_high, title_window , 0, slider_maxH, on_trackbar)
-    cv2.createTrackbar(tNameCh2_low, title_window , 0, slider_maxS, on_trackbar)
-    cv2.createTrackbar(tNameCh2_high, title_window , 0, slider_maxS, on_trackbar)
-    cv2.createTrackbar(tNameCh3_low, title_window , 0, slider_maxV, on_trackbar)
-    cv2.createTrackbar(tNameCh3_high, title_window , 0, slider_maxV, on_trackbar)
+    #     for i in range(0,len(dLoader_obj.imagesList_dir)):
+    #         img = dLoader_obj.loadImageCv(i)
+    #         resized_img = dp.resizeImage(img,120)
+    #         dp.save_image(resized_img,dLoader_obj.dataset_array[i],"ResizedImages",outPut_dir,95)
+    #         printProgressBar(i + 1, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
-    cv2.setTrackbarPos(tNameCh1_low, title_window,50)
-    cv2.setTrackbarPos(tNameCh1_high, title_window,255)
-    cv2.setTrackbarPos(tNameCh2_low, title_window,140)
-    cv2.setTrackbarPos(tNameCh2_high, title_window,180)
-    cv2.setTrackbarPos(tNameCh3_low, title_window,60)
-    cv2.setTrackbarPos(tNameCh3_high, title_window,130)
+    ##########################################################################################################################
+    #THRESHOLD                
 
-    cv2.waitKey(0)
-    cv2.destroyAllWindows() 
+    #dLoader_obj_resized = DataLoader("Processed/Resized")   
+
+    # printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+    # tresholdedImagesList = []
+
+    # for i in range(0,len(dLoader_obj_resized.imagesList_dir)):
+    #     img = dLoader_obj_resized.loadImageCv(i)
+    #     tresholdedImage = dp.tresholdImageYCBCR(img)
+    #     dp.save_image(tresholdedImage,dLoader_obj_resized.dataset_array[i],"TresholdedImages",outPut_dir,95)
+    #     tresholdedImagesList.append(tresholdedImage)
+    #     printProgressBar(i + 1, len(dLoader_obj_resized.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+    #########################################################################################################################
+    #RESULTS PREVIEW
+    
+    # dLoader_obj_tresh = DataLoader("Processed/TresholdedImages")   
+    # dLoader_obj_tresh.loadImagesCv() #wczytaj wszystkie zdjecia z folderu
+    # tresholdedImagesList = dLoader_obj_tresh.imagesList_cv    
+     
+    # fullimg = np.zeros((0,2520),np.uint8)
+    # fullimg_morph = np.zeros((0,2520),np.uint8)
+
+    # for i in range (0,9):   
+    #     img = np.zeros((160,0),np.uint8)
+    #     img_morph = np.zeros((160,0),np.uint8)
+    #     for j in range(0,21):   
+    #         ind = j + i*21             
+    #         img = np.concatenate((img, tresholdedImagesList[ind]), axis = 1)
+            
+    #         img_filtered = dp.morphologicFiltering(tresholdedImagesList[ind],(5,5))
+
+    #         img_morph = np.concatenate((img_morph, img_filtered), axis = 1)
+        
+    #     fullimg = np.concatenate((img, fullimg), axis = 0)
+    #     fullimg_morph = np.concatenate((img_morph, fullimg_morph), axis = 0)
+    
+    # dp.save_image2(fullimg,"zestawienie_progowanie3","",outPut_dir,95)
+    # dp.save_image2(fullimg_morph,"zestawienie_otwarcie_zamkniecie3","",outPut_dir,95)
+
+    #########################################################################################################################
+    #MORPHOLOGIC FILTER
 
     # printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
-    # for i in range(0,len(dLoader_obj.imagesList_dir)):
-    #     img = dLoader_obj.loadImageCv(i)
-    #     resized_img = DataPreprocessing.resizeImage(img,120)
-    #     DataPreprocessing.save_image(resized_img,dLoader_obj.dataset_array[i],"ResizedImages",outPut_dir,95)
-    #     printProgressBar(i + 1, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
-    #     
-    # dPrep_obj = DataPreprocessing(dLoader_obj.imagesList_cv, dLoader_obj.dataset_array[0:imgNum], outPut_dir)
+    # for i in range(0,len(dLoader_obj_tresh.imagesList_dir)):
+    #     img = dLoader_obj_tresh.loadImageCv(i)
+    #     morph_img = dp.morphologicFiltering(img, (5,5))
+    #     dp.save_image(morph_img,dLoader_obj_tresh.dataset_array[i],"MorphFilter",outPut_dir,95)
+    #     printProgressBar(i + 1, len(dLoader_obj_tresh.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
-    # #resize images (scale_down) and save to file
-    # shortEdgeLength = 120
-    # resizedImages = dPrep_obj.resizeImages(shortEdgeLength)
+    #########################################################################################################################
+    #FEATURES AND CONTOUR
 
-    # #save resized images to file for further processing
-    # dPrep_obj.save_processed_images(resizedImages, "ResizedImages",80)
+    dLoader_obj_binary = DataLoader("Processed/MorphFilter")   
+    dLoader_obj_binary.loadImagesCv() #wczytaj wszystkie zdjecia z folderu
+    featuresList = []
+        
+  
+    printProgressBar(0, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
-    # #skin detection for segmentation
+    for i in range(0,len(dLoader_obj_binary.imagesList_dir)):
+        img = dLoader_obj_binary.loadImageCvGray(i)
+        featuresList.append(fe.getAdamFeatures(img)) #TODO - opis wewnatrz funkcji
+        printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+
+    debugstop = 0
+
+
+
+    #skin detection for segmentation
     # COLORSPACE = Enum('Colorspace', 'HSV YUV YCBCR') 
     # _, tresh = dPrep_obj.skinDetection(COLORSPACE.HSV,resizedImages[0])
 
