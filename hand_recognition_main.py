@@ -321,7 +321,11 @@ def main():
     df_features.to_csv(path_csv)
     stop = 0
 
-    
+
+    # CLASSIFICATION
+
+    X, y = dc.getXyfromCSV(path_csv)
+
 
 
 if __name__ == "__main__":
