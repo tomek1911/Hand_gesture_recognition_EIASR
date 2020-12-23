@@ -5,6 +5,9 @@ import csv
 import pandas as pd
 
 from enum import Enum
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.neighbors import KNeighborsClassifier
 from data_preprocessing import DataPreprocessing as dp
 from feature_extraction import FeatureExtraction as fe
 from data_classification import DataClassification as dc
@@ -319,14 +322,27 @@ def main():
     project_path = os.getcwd()
     path_csv = os.path.join(project_path, "CSV", "adam_features.csv") 
     df_features.to_csv(path_csv)
-    stop = 0
 
-
+    #########################################################################################################################
     # CLASSIFICATION
 
     X, y = dc.getXyfromCSV(path_csv)
 
+    # k-NN classifier
+    # source: https://towardsdatascience.com/solving-a-simple-classification-problem-with-python-fruits-lovers-edition-d20ab6b071d2
 
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    scaler = MinMaxScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    knn = KNeighborsClassifier()
+    knn.fit(X_train, y_train)
+
+    print(knn.score(X_train, y_train))
+    print(knn.score(X_test, y_test))
+
+    stop = 0
 
 if __name__ == "__main__":
     main()
