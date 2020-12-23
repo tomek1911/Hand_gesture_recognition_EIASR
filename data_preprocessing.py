@@ -105,6 +105,18 @@ class DataPreprocessing:
         if not os.path.isdir(imwrite_dir):
             os.makedirs(imwrite_dir)     
         cv2.imwrite(imwrite_path, image, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
+
+    @staticmethod
+    def save_image3(image, imgData, folderName, output_dir, quality=80, extension="jpg"):
+       
+        
+        filename = imgData[3]+'.'+extension
+
+        imwrite_dir = os.path.join(output_dir, folderName)
+        imwrite_path = os.path.join(imwrite_dir, filename)
+        if not os.path.isdir(imwrite_dir):
+            os.makedirs(imwrite_dir)     
+        cv2.imwrite(imwrite_path, image, [int(cv2.IMWRITE_JPEG_QUALITY), quality])    
     
     @staticmethod 
     def resizeImage(image, shortEdgeLength):
