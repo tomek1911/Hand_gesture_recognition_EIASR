@@ -51,7 +51,29 @@ class FeatureExtraction:
     @staticmethod
     def getHog(image,_orientations=9, _pixels_per_cell=(8, 8), _cells_per_block=(2, 2), _visualize=True, _multichannel=True):
         fd, img = hog(image, orientations=_orientations, pixels_per_cell=_pixels_per_cell, cells_per_block=_cells_per_block, visualize=_visualize, multichannel=_multichannel)
-        return fd, img  
+        return fd, img
+
+    @staticmethod
+    def get_hog_from_imageset(image_set, images_description):
+        """
+        @param: image_set - images for hog extraction
+        @param: images_description - labels for image_set. 
+        
+        @return: hog_data - return tuple with (hog, image) structure
+                 fd_set - list with hogs for all image_set
+                 img_description_set - same as images_description
+        """
+        fd_set =[]
+        img_description_set = []
+        hog_data = []
+        for image in range(0, len(images_description)):
+
+            fd, _ = hog(image_set[image], orientations=9, pixels_per_cell=(8, 8),
+                                    cells_per_block=(2, 2), visualize=True, multichannel=True)
+            fd_set.append(fd)
+            img_description_set.append(images_description[image][0])
+            hog_data.append((fd, images_description[image][0]))
+        return hog_data, fd_set, img_description_set
 
     @staticmethod
     def featureDict2x(feat_dict):

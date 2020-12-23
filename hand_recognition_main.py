@@ -5,7 +5,7 @@ import csv
 import pandas as pd
 
 from enum import Enum
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.neighbors import KNeighborsClassifier
 from data_preprocessing import DataPreprocessing as dp
@@ -341,7 +341,34 @@ def main():
 
     print(knn.score(X_train, y_train))
     print(knn.score(X_test, y_test))
-
+    
+    # SVM classifier
+    
+    # Uncomment if you extract features not from csv file
+    # listOfImagesDirectories = dLoader_obj.imagesList_dir
+    # imageData = [elem.replace('.png','').split("_") for elem in listOfImagesDirectories]
+    
+    # Function which allow to extract hog features from images
+    hog_data, fd_set, img_desc_set = fe.get_hog_from_imageset(dLoader_obj.imagesList_cv, imageData)
+    
+    X_train, X_test, y_train, y_test = train_test_split(fd_set, img_desc_set, random_state=0, shuffle=True, test_size=0.2)
+    param_grid = [
+        {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
+        {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
+    ]
+    svc = svm.SVC()
+    clf = GridSearchCV(svc, param_grid)
+    clf.fit(X_train, y_train)
+    
+    # y_pred = clf.predict(X_test)
+    
+    # Uncomment to get classification report
+    # print("Classification report for - \n{}:\n{}\n".format(
+    #         clf, metrics.classification_report(y_test, y_pred)))
+    
+    # Generate conf. matrix
+    dc.generate_conf_matrix(confusion_matrix(y_pred, y_test))
+    
     stop = 0
 
 if __name__ == "__main__":

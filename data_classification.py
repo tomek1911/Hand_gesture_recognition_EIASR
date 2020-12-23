@@ -1,5 +1,5 @@
 import csv
-
+import matplotlib.pyplot as plt
 
 class DataClassification:
     """Class provides tools to classify images using features."""
@@ -21,3 +21,13 @@ class DataClassification:
                 y.append(y_row)
         
         return X, y
+    
+    @staticmethod
+    def generate_conf_matrix(matrix, title='Confusion Matrix Hand gesture Recognition' safe=False, matrix_name='confusion_matrix.jpg'):
+        fig = plt.figure()
+        plt.matshow(confusion_matrices)
+        plt.title(title)
+        plt.ylabel('True Label')
+        plt.xlabel('Predicated Label')
+        if safe:
+            plt.savefig(matrix_name)
