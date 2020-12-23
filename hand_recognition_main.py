@@ -200,8 +200,8 @@ def main():
 
     #Test tresholds for data_processing
     
-    image = dLoader_obj.imagesList_cv[0]
-    DataLoader.manualTresholdTester(image)
+    # image = dLoader_obj.imagesList_cv[0]
+    # DataLoader.manualTresholdTester(image)
 
     ##########################################################################################################################
     #RESIZE
@@ -297,7 +297,7 @@ def main():
         contoursList.append(contour)
         output = np.zeros((160,120,3), np.uint8)
         cv2.fillPoly(output, pts =[contour], color=(255,255,255))
-        # cv2.drawContours(output, contour, -1, (0, 0, 255), 2) 
+        cv2.drawContours(output, contour, -1, (0, 0, 255), 2) 
         dp.save_image3(output,dLoader_obj_binary.dataset_array[i],"Contours",outPut_dir,95,"png")
         printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
 
