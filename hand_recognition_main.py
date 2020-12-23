@@ -5,9 +5,7 @@ import csv
 import pandas as pd
 
 from enum import Enum
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.neighbors import KNeighborsClassifier
+
 from data_preprocessing import DataPreprocessing as dp
 from feature_extraction import FeatureExtraction as fe
 from data_classification import DataClassification as dc
@@ -18,8 +16,7 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     filledLength = int(length * iteration // total)
     bar = fill * filledLength + '-' * (length - filledLength)
     print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
-   
-    # Print New Line on Complete
+      
     if iteration == total: 
         print()
 
@@ -93,8 +90,8 @@ class DataLoader:
                 if loadedImages >= im_num and im_num !=0:
                     break
             print ("Loaded: {0} images.".format(len(self.imagesList_cv)))
-        else:
-            print("List of images to load is empty or images are already loaded")
+        # else:
+            # print("List of images to load is empty or images are already loaded")
 
     def loadImageCv(self,id):
         if self.imagesList_dir:
@@ -120,23 +117,35 @@ class DataLoader:
                     writer.writerow(data)
         except IOError:
             print("I/O error")
+    
+    @staticmethod
+    def csvToListOfLists(filename, folder):
 
+        myfile = filename + ".csv"
+        path = os.path.join(os.getcwd(), folder, myfile)          
+         
+        try:
+            with open(path, 'r') as read_obj:    
+                csv_reader = csv.reader(read_obj)
+                return list(csv_reader)
+        except IOError:
+            print("I/O error")
+    
 
     def __init__(self, datasetFolder):
 
         self.project_dir = os.getcwd()
         self.dataset_dir = os.path.join(self.project_dir, datasetFolder) 
         self.getImagesToLoad()
+        self.imagesList_cv = []
+        self.dataset_array = []
 
     @staticmethod
-    def manualTresholdTester(image):
+    def manualTresholdTester(image, colorspace = cv2.COLOR_BGR2YCrCb, slider_maxCh1 = 255, slider_maxCh2 = 255, slider_maxCh3 = 255):
     
-        title_window = "Test slider"
-        slider_maxH = 255
-        slider_maxS = 255
-        slider_maxV = 255
-
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
+        title_window = "Universal Thresholding Manual Sandbox"        
+       
+        image = cv2.cvtColor(image, colorspace)
 
         tNameCh1_low = 'Ch1_low'
         tNameCh1_high = 'Ch1_high'
@@ -161,13 +170,14 @@ class DataLoader:
         cv2.namedWindow(title_window,cv2.WINDOW_NORMAL & cv2.WINDOW_GUI_EXPANDED)
         cv2.imshow(title_window,image)
 
-        cv2.createTrackbar(tNameCh1_low, title_window , 0, slider_maxH, on_trackbar)
-        cv2.createTrackbar(tNameCh1_high, title_window , 0, slider_maxH, on_trackbar)
-        cv2.createTrackbar(tNameCh2_low, title_window , 0, slider_maxS, on_trackbar)
-        cv2.createTrackbar(tNameCh2_high, title_window , 0, slider_maxS, on_trackbar)
-        cv2.createTrackbar(tNameCh3_low, title_window , 0, slider_maxV, on_trackbar)
-        cv2.createTrackbar(tNameCh3_high, title_window , 0, slider_maxV, on_trackbar)
+        cv2.createTrackbar(tNameCh1_low, title_window , 0, slider_maxCh1, on_trackbar)
+        cv2.createTrackbar(tNameCh1_high, title_window , 0, slider_maxCh1, on_trackbar)
+        cv2.createTrackbar(tNameCh2_low, title_window , 0, slider_maxCh2, on_trackbar)
+        cv2.createTrackbar(tNameCh2_high, title_window , 0, slider_maxCh2, on_trackbar)
+        cv2.createTrackbar(tNameCh3_low, title_window , 0, slider_maxCh3, on_trackbar)
+        cv2.createTrackbar(tNameCh3_high, title_window , 0, slider_maxCh3, on_trackbar)
 
+        #Inital tresholds 
         cv2.setTrackbarPos(tNameCh1_low, title_window,50)
         cv2.setTrackbarPos(tNameCh1_high, title_window,255)
         cv2.setTrackbarPos(tNameCh2_low, title_window,140)
@@ -180,32 +190,28 @@ class DataLoader:
 
 
 def main():
-    #Load image filenames from Data folder
-    dLoader_obj = DataLoader("Data")
-
-    #Describe images - filename, class, author
-    dLoader_obj.describeLoadedData()
-
-    #print first 10    
-    print(*dLoader_obj.dataset_array[0:20], sep="\n")
     
-    #load images as opencv Mat 
-    imgNum = 1
-    dLoader_obj.loadImagesCv(imgNum)
-
-    #load images one by one, resize and save
-    #set path to save processed images 
-    outPut_dir = os.path.join(dLoader_obj.project_dir,"Processed")    
+    print("ASL Hand Gestures Recgonition - Initialize")
+    #Initialisation
+    dLoader_obj = DataLoader("Data") # load dataset images directories
+    dLoader_obj.describeLoadedData() # read labels and images id 
+    print(*dLoader_obj.dataset_array[0:5], sep="\n")  # print labels and images id - first 5   
 
     #Test tresholds for data_processing
-    
-    # image = dLoader_obj.imagesList_cv[8]
-    # DataLoader.manualTresholdTester(image)
+    dLoader_obj.loadImagesCv(1) # load one of images 
+    image = dLoader_obj.imagesList_cv[0]
+    #DataLoader.manualTresholdTester(image) - uncomment
+
+    # assign output folder path for processed images
+    outPut_dir = os.path.join(dLoader_obj.project_dir,"Processed") 
 
     ##########################################################################################################################
+    #
+    # DEVELOMPENT STAGES - workflow - read images from file, process, save to file 
+    #
+    ##########################################################################################################################
     #RESIZE
-
-
+    # print("Resize original datset images:")
     # printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
     # for i in range(0,len(dLoader_obj.imagesList_dir)):
@@ -216,7 +222,8 @@ def main():
 
     ##########################################################################################################################
     #THRESHOLD                
-
+    
+    print("Thresholding - YCbCr colorspace based:")
     dLoader_obj_resized = DataLoader("Processed/ResizedImages")   
     dLoader_obj_resized.describeLoadedDataPNG()
     dLoader_obj_resized.loadImagesCv()
@@ -228,18 +235,16 @@ def main():
         img = dLoader_obj_resized.loadImageCv(i)
         tresholdedImage = dp.tresholdImageYCBCR(img)
         dp.save_image3(tresholdedImage,dLoader_obj_resized.dataset_array[i],"TresholdedImages",outPut_dir,95,"png")
-        # tresholdedImagesList.append(tresholdedImage)
         printProgressBar(i + 1, len(dLoader_obj_resized.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
     #########################################################################################################################
-    #RESULTS PREVIEW
+    #RESULTS PREVIEW - create figures of concatenated images - 2520x1440px - 189 images
     
     dLoader_obj_tresh = DataLoader("Processed/TresholdedImages")   
     dLoader_obj_tresh.describeLoadedDataPNG()
-    dLoader_obj_tresh.loadImagesCv() #wczytaj wszystkie zdjecia z folderu
+    dLoader_obj_tresh.loadImagesCv()
     
-    tresholdedImagesList = dLoader_obj_tresh.imagesList_cv    
-     
+    # tresholdedImagesList = dLoader_obj_tresh.imagesList_cv         
     # fullimg = np.zeros((0,2520),np.uint8)
     # fullimg_morph = np.zeros((0,2520),np.uint8)
 
@@ -262,7 +267,8 @@ def main():
 
     #########################################################################################################################
     #MORPHOLOGIC FILTER
-
+ 
+    print("Morphologic filtering - opend and close:")
     printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
     for i in range(0,len(dLoader_obj_tresh.imagesList_dir)):
@@ -274,20 +280,12 @@ def main():
     #########################################################################################################################
     #CONTOURS
 
+    print("Filtering contours - chose hand contour:")
     dLoader_obj_binary = DataLoader("Processed/MorphFilter")   
     dLoader_obj_binary.describeLoadedDataPNG()
-    dLoader_obj_binary.loadImagesCv() #wczytaj wszystkie zdjecia z folderu
-    featuresList = []       
-  
-    # printProgressBar(0, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
-
-    # for i in range(0,len(dLoader_obj_binary.imagesList_dir)):
-    #     img = dLoader_obj_binary.loadImageCvGray(i)
-    #     featuresList.append(fe.getAdamFeatures(img)) #TODO - opis wewnatrz funkcji
-    #     printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
-
+    dLoader_obj_binary.loadImagesCv()
+ 
     contoursList=[]
-
     printProgressBar(0, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
     for i in range(0,len(dLoader_obj_binary.imagesList_dir)):
@@ -301,8 +299,9 @@ def main():
         printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
 
     #########################################################################################################################
-    #CONTOURS
+    #FEATURES I - handmade
 
+    print("Features I - handmade:")
     dLoader_obj_cont = DataLoader("Processed/Contours")   
     dLoader_obj_cont.describeLoadedDataPNG()
     dLoader_obj_cont.loadImagesCv() #wczytaj wszystkie zdjecia z folderu
@@ -318,58 +317,58 @@ def main():
         featuresList.append(dict_adam)
         printProgressBar(i + 1, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
 
+    #add features I to dataframe, save them to csv file
     df_features = pd.DataFrame(featuresList)
     project_path = os.getcwd()
     path_csv = os.path.join(project_path, "CSV", "adam_features.csv") 
     df_features.to_csv(path_csv)
 
     #########################################################################################################################
+    #FEATURES II - hog (!long calc)
+    
+    # print(" Features II - hog:")
+    # hogFeaturesList = []    
+    # hogImgLabels = []
+    # printProgressBar(0, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+    # for i in range(0,len(dLoader_obj_cont.imagesList_dir)):
+    #     img = dLoader_obj_cont.loadImageCvGray(i)
+    #     hog_vec, hog_img = fe.getHog(img,_multichannel=False)
+    #     hogFeaturesList.append(hog_vec)
+    #     hogImgLabels.append(dLoader_obj_cont.dataset_array[i][0])
+    #     dp.save_image3(hog_img,dLoader_obj_cont.dataset_array[i],"Hog",outPut_dir,95,"png")
+    #     printProgressBar(i + 1, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
+
+    # #add features II to dataframe, save them to csv file
+    # df_features2 = pd.DataFrame(hogFeaturesList)
+    # project_path = os.getcwd()
+    # path_csv_hog = os.path.join(project_path, "CSV", "hog_features.csv") 
+    # df_features2.to_csv(path_csv_hog)
+    
+    #hog calculation takes log for dataset so we read features from file
+    hogImgLabels = []    
+    for i in range(0,len(dLoader_obj_cont.imagesList_dir)):
+         hogImgLabels.append(dLoader_obj_cont.dataset_array[i][0])
+
+    hogFeaturesList = DataLoader.csvToListOfLists("hog_features", "CSV")
+    
+    # remove list with feature ids, and column with vector id
+    del hogFeaturesList[0]
+    for vector in hogFeaturesList:
+        del vector[0]
+
+    #########################################################################################################################
     # CLASSIFICATION
-
-    X, y = dc.getXyfromCSV(path_csv)
-
     # k-NN classifier
-    # source: https://towardsdatascience.com/solving-a-simple-classification-problem-with-python-fruits-lovers-edition-d20ab6b071d2
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    scaler = MinMaxScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
+    print("k-NN classifier, features I:")
+    X, y = dc.getXyfromCSV(path_csv)
+    dc.fitKnn(X,y,print_res=True)
+    
+    # SVM classifier (<1min)
+    print("SVM classifier, features II:")
+    dc.fitSVM(hogFeaturesList, hogImgLabels, print_res=True, confusionMatrix=True) 
 
-    knn = KNeighborsClassifier()
-    knn.fit(X_train, y_train)
-
-    print(knn.score(X_train, y_train))
-    print(knn.score(X_test, y_test))
-    
-    # SVM classifier
-    
-    # Uncomment if you extract features not from csv file
-    # listOfImagesDirectories = dLoader_obj.imagesList_dir
-    # imageData = [elem.replace('.png','').split("_") for elem in listOfImagesDirectories]
-    
-    # Function which allow to extract hog features from images
-    hog_data, fd_set, img_desc_set = fe.get_hog_from_imageset(dLoader_obj.imagesList_cv, imageData)
-    
-    X_train, X_test, y_train, y_test = train_test_split(fd_set, img_desc_set, random_state=0, shuffle=True, test_size=0.2)
-    param_grid = [
-        {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
-        {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
-    ]
-    svc = svm.SVC()
-    clf = GridSearchCV(svc, param_grid)
-    clf.fit(X_train, y_train)
-    
-    # y_pred = clf.predict(X_test)
-    
-    # Uncomment to get classification report
-    # print("Classification report for - \n{}:\n{}\n".format(
-    #         clf, metrics.classification_report(y_test, y_pred)))
-    
-    # Generate conf. matrix
-    dc.generate_conf_matrix(confusion_matrix(y_pred, y_test))
-    
-    stop = 0
 
 if __name__ == "__main__":
     main()

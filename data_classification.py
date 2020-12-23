@@ -1,10 +1,20 @@
 import csv
+import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm
+
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn import svm, metrics
+from sklearn.metrics import plot_confusion_matrix
 
 class DataClassification:
     """Class provides tools to classify images using features."""
-    pass
-
+    
+    @staticmethod
     def getXyfromCSV(path_features_csv):
         X = []
         y = []
@@ -23,11 +33,75 @@ class DataClassification:
         return X, y
     
     @staticmethod
-    def generate_conf_matrix(matrix, title='Confusion Matrix Hand gesture Recognition' safe=False, matrix_name='confusion_matrix.jpg'):
-        fig = plt.figure()
-        plt.matshow(confusion_matrices)
+    def generate_conf_matrix(y_pred, y_test, save=False, title='Confusion Matrix - HOG - SVM', matrix_name='Confusion_matrix_hog_svm.png'):
+        matrix = confusion_matrix(y_pred, y_test)
+        plt.matshow(matrix)
         plt.title(title)
         plt.ylabel('True Label')
         plt.xlabel('Predicated Label')
-        if safe:
-            plt.savefig(matrix_name)
+        plt.show()
+        
+        if save:
+            plt.savefig(matrix_name)  
+
+    @staticmethod
+    def confusion_matrix2(clf, X, y, printInTerminal = False):
+
+        np.set_printoptions(precision=2)
+        title = 'Confusion Matrix - HOG - SVM'
+        lst = list(set(y))
+        classNames = sorted(lst)
+
+        disp = plot_confusion_matrix(clf, X, y, display_labels=classNames, cmap=plt.cm.Blues, normalize=None)
+        disp.ax_.set_title(title)
+        if printInTerminal == True:
+            print(title)
+            print(disp.confusion_matrix)
+
+        plt.show()
+
+    @staticmethod
+    def fitKnn(X,y, test_split_ratio=0.25, print_res = False):
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, test_size=test_split_ratio)
+        scaler = MinMaxScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test = scaler.transform(X_test)
+
+        knn = KNeighborsClassifier() #TODO grid-search, cross-validation parameters-tuning
+        knn.fit(X_train, y_train)
+
+        if print_res==True:
+                print(f"Training dataset accuracy: {knn.score(X_train, y_train):.3f}, test dataset accuracy: {knn.score(X_test, y_test):.3f}.")
+
+        return knn
+    
+    @staticmethod
+    def fitSVM(X,y,test_split_ratio=0.2, print_res=False, print_detailed_res=False, confusionMatrix = False):
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, shuffle=True, test_size=test_split_ratio)
+        
+        param_grid = [
+            {'C': [1], 'kernel': ['linear']},
+            # {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
+            # {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
+        ]
+        
+        svc = svm.SVC()
+        clf = GridSearchCV(svc, param_grid, verbose=1)
+        clf.fit(X_train, y_train)
+        
+        y_pred = clf.predict(X_test)
+        
+        if print_res == True:
+            print(f"Training dataset accuracy: {clf.best_estimator_.score(X_train, y_train):.3f}, test dataset accuracy: {clf.best_estimator_.score(X_test, y_test):.3f}.")
+                   
+        if print_detailed_res == True:
+            print("Classification report for - \n{}:\n{}\n".format(clf, metrics.classification_report(y_test, y_pred)))
+        
+        if confusionMatrix == True:
+            # DataClassification.generate_conf_matrix(y_pred, y_test, save = True)
+            DataClassification.confusion_matrix2(clf, X_test, y_test)
+
+        return clf
+

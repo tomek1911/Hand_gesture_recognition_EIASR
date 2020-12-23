@@ -4,7 +4,6 @@ import math
 
 from skimage.feature import hog
 
-
 class FeatureExtraction:
     """Class provides tools to extract features from images."""
     pass
