@@ -1,22 +1,19 @@
 import cv2
 import numpy as np
-import math
+import math 
+
+from skimage.feature import hog
+
 
 class FeatureExtraction:
     """Class provides tools to extract features from images."""
     pass
 
     @staticmethod
-    def getAdamFeatures(binary_image):
+    def getAdamFeatures(cnt, binary_image):
         features_dict = {}
-
-        contours, _ = cv2.findContours(binary_image,
-                                                cv2.RETR_EXTERNAL,
-                                                cv2.CHAIN_APPROX_SIMPLE)
-        # Unpack an array of contours
-        cnt = contours[0] #TODO - dodac filtrowanie konturow - trzeba wybrac najwiekszy - pewnie nalezy do reki - dodatkowy warunek np minimum 25% powierzchni zdjecia
-        # Moments
         M = cv2.moments(cnt)
+        
         # Centroid
         c_x = int(M['m10'] / M['m00'])
         c_y = int(M['m01'] / M['m00'])
@@ -50,7 +47,12 @@ class FeatureExtraction:
         features_dict['line_slope'] = line_slope
 
         return features_dict
-    
+
+    @staticmethod
+    def getHog(image,_orientations=9, _pixels_per_cell=(8, 8), _cells_per_block=(2, 2), _visualize=True, _multichannel=True):
+        fd, img = hog(image, orientations=_orientations, pixels_per_cell=_pixels_per_cell, cells_per_block=_cells_per_block, visualize=_visualize, multichannel=_multichannel)
+        return fd, img  
+
     @staticmethod
     def featureDict2x(feat_dict):
         x = []

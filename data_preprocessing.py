@@ -84,11 +84,11 @@ class DataPreprocessing:
                 os.makedirs(imwrite_dir)
                 cv2.imwrite(imwrite_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
     @staticmethod
-    def save_image(image, imgData, folderName, output_dir, quality=80):
+    def save_image(image, imgData, folderName, output_dir, quality=80, extension="jpg"):
         sufix = ''
         if imgData[3] == "Oleksandr_2":
             sufix = '2'
-        filename = imgData[1]+"_"+imgData[2]+"_"+imgData[3][0]+sufix+".jpg"
+        filename = imgData[1]+"_"+imgData[2]+"_"+imgData[3][0]+sufix+'.'+extension
 
         imwrite_dir = os.path.join(output_dir, folderName)
         imwrite_path = os.path.join(imwrite_dir, filename)
@@ -97,9 +97,9 @@ class DataPreprocessing:
         cv2.imwrite(imwrite_path, image, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
 
     @staticmethod
-    def save_image2(image, imgName, folderName, output_dir, quality=80):
+    def save_image2(image, imgName, folderName, output_dir, quality=80, extension="jpg"):
 
-        filename = imgName+".jpg"
+        filename = imgName+'.'+extension
         imwrite_dir = os.path.join(output_dir, folderName)
         imwrite_path = os.path.join(imwrite_dir, filename)
         if not os.path.isdir(imwrite_dir):
@@ -120,6 +120,20 @@ class DataPreprocessing:
             img_resized = cv2.resize(image,(shortEdgeLength,newLongEdgeLegth),interpolation=cv2.INTER_AREA) #shrink     
         return img_resized 
 
+    @staticmethod
+    def filterContours(image):
+
+        contours, _ = cv2.findContours(image,
+                                       cv2.RETR_EXTERNAL,
+                                       cv2.CHAIN_APPROX_NONE)
+        contoursArea = []
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            contoursArea.append(area)
+        
+        biggestContourId = contoursArea.index(max(contoursArea))
+
+        return contours[biggestContourId]
 
     def skinDetection(self, colorSpace, image):
 

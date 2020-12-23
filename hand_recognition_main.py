@@ -168,36 +168,36 @@ def main():
     #RESIZE
 
 
-    # if False:
-    #     printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+    # printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
-    #     for i in range(0,len(dLoader_obj.imagesList_dir)):
-    #         img = dLoader_obj.loadImageCv(i)
-    #         resized_img = dp.resizeImage(img,120)
-    #         dp.save_image(resized_img,dLoader_obj.dataset_array[i],"ResizedImages",outPut_dir,95)
-    #         printProgressBar(i + 1, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+    # for i in range(0,len(dLoader_obj.imagesList_dir)):
+    #     img = dLoader_obj.loadImageCv(i)
+    #     resized_img = dp.resizeImage(img,120)
+    #     dp.save_image(resized_img,dLoader_obj.dataset_array[i],"ResizedImages",outPut_dir,95,"png")
+    #     printProgressBar(i + 1, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
     ##########################################################################################################################
     #THRESHOLD                
 
-    #dLoader_obj_resized = DataLoader("Processed/Resized")   
+    dLoader_obj_resized = DataLoader("Processed/ResizedImages")   
+    dLoader_obj_resized.loadImagesCv()
 
-    # printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+    printProgressBar(0, len(dLoader_obj_resized.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
     # tresholdedImagesList = []
 
-    # for i in range(0,len(dLoader_obj_resized.imagesList_dir)):
-    #     img = dLoader_obj_resized.loadImageCv(i)
-    #     tresholdedImage = dp.tresholdImageYCBCR(img)
-    #     dp.save_image(tresholdedImage,dLoader_obj_resized.dataset_array[i],"TresholdedImages",outPut_dir,95)
-    #     tresholdedImagesList.append(tresholdedImage)
-    #     printProgressBar(i + 1, len(dLoader_obj_resized.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+    for i in range(0,len(dLoader_obj_resized.imagesList_dir)):
+        img = dLoader_obj_resized.loadImageCv(i)
+        tresholdedImage = dp.tresholdImageYCBCR(img)
+        dp.save_image(tresholdedImage,dLoader_obj_resized.dataset_array[i],"TresholdedImages",outPut_dir,95,"png")
+        # tresholdedImagesList.append(tresholdedImage)
+        printProgressBar(i + 1, len(dLoader_obj_resized.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
     #########################################################################################################################
     #RESULTS PREVIEW
     
-    # dLoader_obj_tresh = DataLoader("Processed/TresholdedImages")   
-    # dLoader_obj_tresh.loadImagesCv() #wczytaj wszystkie zdjecia z folderu
-    # tresholdedImagesList = dLoader_obj_tresh.imagesList_cv    
+    dLoader_obj_tresh = DataLoader("Processed/TresholdedImages")   
+    dLoader_obj_tresh.loadImagesCv() #wczytaj wszystkie zdjecia z folderu
+    tresholdedImagesList = dLoader_obj_tresh.imagesList_cv    
      
     # fullimg = np.zeros((0,2520),np.uint8)
     # fullimg_morph = np.zeros((0,2520),np.uint8)
@@ -222,28 +222,40 @@ def main():
     #########################################################################################################################
     #MORPHOLOGIC FILTER
 
-    # printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+    printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
-    # for i in range(0,len(dLoader_obj_tresh.imagesList_dir)):
-    #     img = dLoader_obj_tresh.loadImageCv(i)
-    #     morph_img = dp.morphologicFiltering(img, (5,5))
-    #     dp.save_image(morph_img,dLoader_obj_tresh.dataset_array[i],"MorphFilter",outPut_dir,95)
-    #     printProgressBar(i + 1, len(dLoader_obj_tresh.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+    for i in range(0,len(dLoader_obj_tresh.imagesList_dir)):
+        img = dLoader_obj_tresh.loadImageCv(i)
+        morph_img = dp.morphologicFiltering(img, (5,5))
+        dp.save_image(morph_img,dLoader_obj_tresh.dataset_array[i],"MorphFilter",outPut_dir,95,"png")
+        printProgressBar(i + 1, len(dLoader_obj_tresh.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
     #########################################################################################################################
     #FEATURES AND CONTOUR
 
     dLoader_obj_binary = DataLoader("Processed/MorphFilter")   
     dLoader_obj_binary.loadImagesCv() #wczytaj wszystkie zdjecia z folderu
-    featuresList = []
-        
+    featuresList = []       
   
+    # printProgressBar(0, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+    # for i in range(0,len(dLoader_obj_binary.imagesList_dir)):
+    #     img = dLoader_obj_binary.loadImageCvGray(i)
+    #     featuresList.append(fe.getAdamFeatures(img)) #TODO - opis wewnatrz funkcji
+    #     printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+
     printProgressBar(0, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
     for i in range(0,len(dLoader_obj_binary.imagesList_dir)):
         img = dLoader_obj_binary.loadImageCvGray(i)
-        featuresList.append(fe.getAdamFeatures(img)) #TODO - opis wewnatrz funkcji
-        printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+        contour = dp.filterContours(img)
+        
+        output = np.zeros((160,120,3), np.uint8)
+        cv2.fillPoly(output, pts =[contour], color=(255,255,255))
+        #cv2.drawContours(output, contour, -1, (0, 0, 255), 2) 
+        dp.save_image(output,dLoader_obj_binary.dataset_array[i],"Contours",outPut_dir,95,"png")
+        printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
 
 
     debugstop = 0
