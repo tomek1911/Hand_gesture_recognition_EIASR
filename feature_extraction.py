@@ -49,7 +49,7 @@ class FeatureExtraction:
         return features_dict
 
     @staticmethod
-    def getHog(image,_orientations=9, _pixels_per_cell=(8, 8), _cells_per_block=(2, 2), _visualize=True, _multichannel=True):
+    def getHog(image,_orientations=9, _pixels_per_cell=(8, 8), _cells_per_block=(2, 2), _visualize=True, _multichannel=False):
         fd, img = hog(image, orientations=_orientations, pixels_per_cell=_pixels_per_cell, cells_per_block=_cells_per_block, visualize=_visualize, multichannel=_multichannel)
         return fd, img  
 

@@ -8,6 +8,7 @@ from enum import Enum
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.decomposition import PCA
 from data_preprocessing import DataPreprocessing as dp
 from feature_extraction import FeatureExtraction as fe
 from data_classification import DataClassification as dc
@@ -199,8 +200,8 @@ def main():
 
     #Test tresholds for data_processing
     
-    # image = dLoader_obj.imagesList_cv[8]
-    # DataLoader.manualTresholdTester(image)
+    image = dLoader_obj.imagesList_cv[0]
+    DataLoader.manualTresholdTester(image)
 
     ##########################################################################################################################
     #RESIZE
@@ -296,12 +297,12 @@ def main():
         contoursList.append(contour)
         output = np.zeros((160,120,3), np.uint8)
         cv2.fillPoly(output, pts =[contour], color=(255,255,255))
-        #cv2.drawContours(output, contour, -1, (0, 0, 255), 2) 
+        # cv2.drawContours(output, contour, -1, (0, 0, 255), 2) 
         dp.save_image3(output,dLoader_obj_binary.dataset_array[i],"Contours",outPut_dir,95,"png")
         printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
 
     #########################################################################################################################
-    #CONTOURS
+    #Features I - ADAM
 
     dLoader_obj_cont = DataLoader("Processed/Contours")   
     dLoader_obj_cont.describeLoadedDataPNG()
@@ -323,6 +324,31 @@ def main():
     path_csv = os.path.join(project_path, "CSV", "adam_features.csv") 
     df_features.to_csv(path_csv)
 
+    #########################################################################################################################
+    # #Features II - HOG
+
+    # hogFeaturesList = []    
+
+    # printProgressBar(0, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+    # for i in range(0,len(dLoader_obj_cont.imagesList_dir)):
+    #     img = dLoader_obj_cont.loadImageCvGray(i)
+    #     hog_vec, hog_img = fe.getHog(img)
+    #     hogFeaturesList.append(hog_vec)
+    #     dp.save_image3(hog_img,dLoader_obj_cont.dataset_array[i],"Hog",outPut_dir,95,"png")
+    #     printProgressBar(i + 1, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
+
+    # df_features2 = pd.DataFrame(hogFeaturesList)
+    # # project_path = os.getcwd()
+    # # path_csv = os.path.join(project_path, "CSV", "hog_features.csv") 
+    # # df_features2.to_csv(path_csv)
+
+
+    # pca = PCA(n_components='mle')
+    # hog_array = df_features2.to_numpy()
+    # pca = PCA(n_components=100)
+    # pca.fit(hog_array)
+    # print(pca.explained_variance_ratio_)
     #########################################################################################################################
     # CLASSIFICATION
 
