@@ -368,6 +368,7 @@ def main():
     # SVM classifier (<1min)
     print("SVM classifier, features II:")
     dc.fitSVM(hogFeaturesList, hogImgLabels, print_res=True, confusionMatrix=True) 
+    print("The end")
 
 
 if __name__ == "__main__":
