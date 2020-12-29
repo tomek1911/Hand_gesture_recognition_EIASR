@@ -186,7 +186,7 @@ class DataLoader:
         cv2.setTrackbarPos(tNameCh3_high, title_window,130)
 
         cv2.waitKey(0)
-        cv2.destroyAllWindows()     
+        cv2.destroyAllWindows()
 
 
 def main():
@@ -345,7 +345,7 @@ def main():
     # path_csv_hog = os.path.join(project_path, "CSV", "hog_features.csv") 
     # df_features2.to_csv(path_csv_hog)
     
-    #hog calculation takes log for dataset so we read features from file
+    #hog calculation takes long for dataset so we read features from file
     hogImgLabels = []    
     for i in range(0,len(dLoader_obj_cont.imagesList_dir)):
          hogImgLabels.append(dLoader_obj_cont.dataset_array[i][0])
@@ -368,7 +368,6 @@ def main():
     # SVM classifier (<1min)
     print("SVM classifier, features II:")
     dc.fitSVM(hogFeaturesList, hogImgLabels, print_res=True, confusionMatrix=True) 
-    print("The end")
 
 
 if __name__ == "__main__":
