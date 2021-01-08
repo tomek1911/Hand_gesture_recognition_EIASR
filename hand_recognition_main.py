@@ -299,6 +299,24 @@ def main():
         printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
 
     #########################################################################################################################
+    #RGB coutout with mask
+    
+    print("Cuting out rgb images with segmented hand mask:")
+    dLoader_obj_segmented = DataLoader("Processed/Contours")   
+    dLoader_obj_segmented.describeLoadedDataPNG()
+    dLoader_obj_binary.loadImagesCv()
+
+    printProgressBar(0, len(dLoader_obj_segmented.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+    for i in range(0,len(dLoader_obj_segmented.imagesList_dir)):
+        img = dLoader_obj_resized.loadImageCv(i)
+        mask_img = dLoader_obj_segmented.loadImageCvGray(i) # mask       
+        res = cv2.bitwise_and(img,img,mask = mask_img)
+        dp.save_image3(res,dLoader_obj_segmented.dataset_array[i],"CutoutRGB",outPut_dir,95,"png")
+        printProgressBar(i + 1, len(dLoader_obj_segmented.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
+      
+
+    #########################################################################################################################
     #FEATURES I - handmade
 
     print("Features I - handmade:")
@@ -324,9 +342,9 @@ def main():
     df_features.to_csv(path_csv)
 
     #########################################################################################################################
-    #FEATURES II - hog (!long calc)
+    #FEATURES IIa - hog (!long calc)
     
-    # print(" Features II - hog:")
+    # print(" Features II - hog (grayscale images):")
     # hogFeaturesList = []    
     # hogImgLabels = []
     # printProgressBar(0, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
@@ -344,13 +362,50 @@ def main():
     # project_path = os.getcwd()
     # path_csv_hog = os.path.join(project_path, "CSV", "hog_features.csv") 
     # df_features2.to_csv(path_csv_hog)
-    
+
+
+    #########################################################################################################################
+    #FEATURES IIb - hog RGB (!long calc)
+
+    # dLoader_obj_rgbmasked = DataLoader("Processed/CutoutRGB")   
+    # dLoader_obj_rgbmasked.describeLoadedDataPNG()
+    # dLoader_obj_rgbmasked.loadImagesCv() #wczytaj wszystkie zdjecia z folderu 
+
+    # print("Features II - hog (rgb images):")
+    # hogRGBFeaturesList = []    
+    # hogImgLabels = []
+    # printProgressBar(0, len(dLoader_obj_rgbmasked.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+    # for i in range(0,len(dLoader_obj_rgbmasked.imagesList_dir)):
+    #     img = dLoader_obj_rgbmasked.loadImageCv(i)
+    #     hog_vec, hog_img = fe.getHog(img,_multichannel=True)
+    #     hogRGBFeaturesList.append(hog_vec)
+    #     hogImgLabels.append(dLoader_obj_rgbmasked.dataset_array[i][0])
+    #     dp.save_image3(hog_img,dLoader_obj_rgbmasked.dataset_array[i],"HogRGB",outPut_dir,95,"png")
+    #     printProgressBar(i + 1, len(dLoader_obj_rgbmasked.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
+
+    # #add features IIb to dataframe, save them to csv file
+    # df_features2b = pd.DataFrame(hogRGBFeaturesList)
+    # project_path = os.getcwd()
+    # path_csv_hog_rgb = os.path.join(project_path, "CSV", "hog_rgb_features.csv") 
+    # df_features2b.to_csv(path_csv_hog_rgb)        
+
     #hog calculation takes log for dataset so we read features from file
     hogImgLabels = []    
     for i in range(0,len(dLoader_obj_cont.imagesList_dir)):
          hogImgLabels.append(dLoader_obj_cont.dataset_array[i][0])
 
-    hogFeaturesList = DataLoader.csvToListOfLists("hog_features", "CSV")
+    useRGB_hog_features = True
+    featuresFile = ''
+
+    if useRGB_hog_features:
+        featuresFile = 'hog_rgb_features'
+        print("Using RGB HOG features")
+    else:
+        featuresFile = 'hog_features'
+        print("Using grayscale HOG features")
+
+    hogFeaturesList = DataLoader.csvToListOfLists(featuresFile, "CSV")
     
     # remove list with feature ids, and column with vector id
     del hogFeaturesList[0]

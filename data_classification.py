@@ -2,6 +2,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm
+import os
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import MinMaxScaler
@@ -10,6 +11,8 @@ from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn import svm, metrics
 from sklearn.metrics import plot_confusion_matrix
+
+from feature_extraction import FeatureExtraction as fe
 
 class DataClassification:
     """Class provides tools to classify images using features."""
@@ -34,18 +37,25 @@ class DataClassification:
     
     @staticmethod
     def generate_conf_matrix(y_pred, y_test, save=False, title='Confusion Matrix - HOG - SVM', matrix_name='Confusion_matrix_hog_svm.png'):
+
+        my_dir = os.getcwd()
+        plot_dir = os.path.join(my_dir, "Plots")
+
         matrix = confusion_matrix(y_pred, y_test)
         plt.matshow(matrix)
         plt.title(title)
         plt.ylabel('True Label')
         plt.xlabel('Predicated Label')
-        plt.show()
+        plt.show()        
         
         if save:
-            plt.savefig(matrix_name)  
+            plt.savefig(plot_dir + "//confMatrix_hog_svm.png")
 
     @staticmethod
     def confusion_matrix2(clf, X, y, printInTerminal = False):
+
+        my_dir = os.getcwd()
+        plot_dir = os.path.join(my_dir, "Plots")
 
         np.set_printoptions(precision=2)
         title = 'Confusion Matrix - HOG - SVM'
@@ -56,9 +66,9 @@ class DataClassification:
         disp.ax_.set_title(title)
         if printInTerminal == True:
             print(title)
-            print(disp.confusion_matrix)
+            print(disp.confusion_matrix)            
 
-        plt.show()
+        plt.savefig(plot_dir + "//confMatrix_hog_svm.png")
 
     @staticmethod
     def fitKnn(X,y, test_split_ratio=0.25, print_res = False):
@@ -78,9 +88,15 @@ class DataClassification:
     
     @staticmethod
     def fitSVM(X,y,test_split_ratio=0.2, print_res=False, print_detailed_res=False, confusionMatrix = False):
-
+  
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, shuffle=True, test_size=test_split_ratio)
-        
+
+        fe.project2D_PCA(X,y)
+     
+        print(f"Training set size: {len(X_train)}x{len(X_train[0])}")
+        X_train, X_test = fe.applyPCA(X_train, X_test)
+        print(f"Training set size after PCA: {len(X_train)}x{len(X_train[0])}")
+                
         param_grid = [
             {'C': [1], 'kernel': ['linear']},
             # {'C': [1, 10, 100, 1000], 'kernel': ['linear']},

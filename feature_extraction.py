@@ -1,12 +1,61 @@
 import cv2
 import numpy as np
 import math 
+import string
+import os
 
 from skimage.feature import hog
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+import matplotlib.cm
+import matplotlib.colorbar
 
 class FeatureExtraction:
     """Class provides tools to extract features from images."""
     pass
+
+    @staticmethod
+    def applyPCA(trainFeatures, testFeatures, varianceRetained=0.95):
+        scaler = StandardScaler()
+        scaler.fit(trainFeatures) # fit only for training data
+
+        trainFeatures = scaler.transform(trainFeatures)
+        testFeatures = scaler.transform(testFeatures)
+
+        pca = PCA(varianceRetained)
+        pca.fit(trainFeatures) # fit only for training data
+        print(f"PCA maps for: {pca.n_components_} components and retains: {varianceRetained} variance\n")  
+
+        trainFeatures = pca.transform(trainFeatures)
+        testFeatures = pca.transform(testFeatures)
+
+        return trainFeatures, testFeatures 
+
+    @staticmethod
+    def project2D_PCA(allFeatures, labels):
+
+        dir = os.getcwd()
+        plot_dir = os.path.join(dir, "Plots")
+
+        pca = PCA(2)
+        projected = pca.fit_transform(allFeatures)
+
+        lst = list(set(labels)) # get unique values
+        classNames = sorted(lst)
+
+        labelsNum = [ord(c)-65 for c in labels]
+
+        plt.scatter(projected[:, 0], projected[:, 1],
+            c=labelsNum, edgecolor='none', alpha=0.5,
+            cmap=plt.cm.get_cmap('nipy_spectral', len(classNames)))
+        plt.xlabel('component 1')
+        plt.ylabel('component 2')
+        myTicks = sorted(list(set(labelsNum)))
+        cbar = plt.colorbar(orientation = 'vertical')   
+        cbar.set_ticks(myTicks)   
+        cbar.set_ticklabels(classNames)
+        plt.savefig(plot_dir + "//pca2D_hog.png")
 
     @staticmethod
     def getAdamFeatures(cnt, binary_image):
