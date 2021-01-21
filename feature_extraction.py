@@ -55,7 +55,7 @@ class FeatureExtraction:
         cbar = plt.colorbar(orientation = 'vertical')   
         cbar.set_ticks(myTicks)   
         cbar.set_ticklabels(classNames)
-        plt.savefig(plot_dir + "//pca2D_hog.png")
+        plt.savefig(plot_dir + "//pca2D_hog.png", dpi = 300)
 
     @staticmethod
     def getAdamFeatures(cnt, binary_image):
