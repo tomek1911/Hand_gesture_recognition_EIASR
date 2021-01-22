@@ -143,9 +143,12 @@ class DataPreprocessing:
             area = cv2.contourArea(cnt)
             contoursArea.append(area)
         
-        biggestContourId = contoursArea.index(max(contoursArea))
-
-        return contours[biggestContourId]
+        if not contoursArea:
+            return []
+        else:
+            biggestContourId = contoursArea.index(max(contoursArea))
+            return contours[biggestContourId]     
+            
 
     def skinDetection(self, colorSpace, image):
 
@@ -200,6 +203,8 @@ class DataPreprocessing:
         upperBound = (Y_max, Cr_max, Cb_max)
         
         img_cvt_tresholded = cv2.inRange(img_cvt, lowerBound, upperBound)
+        if len(img_cvt_tresholded.shape) == 3:
+            img_cvt_tresholded = cv2.cvtColor(img_cvt_tresholded, cv2.COLOR_BGR2GRAY)            
 
         return img_cvt_tresholded       
     

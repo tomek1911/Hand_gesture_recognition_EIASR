@@ -9,6 +9,7 @@ from enum import Enum
 from data_preprocessing import DataPreprocessing as dp
 from feature_extraction import FeatureExtraction as fe
 from data_classification import DataClassification as dc
+import camera
 
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '#', printEnd = "\r"):
 
@@ -129,16 +130,7 @@ class DataLoader:
                 csv_reader = csv.reader(read_obj)
                 return list(csv_reader)
         except IOError:
-            print("I/O error")
-    
-
-    def __init__(self, datasetFolder):
-
-        self.project_dir = os.getcwd()
-        self.dataset_dir = os.path.join(self.project_dir, datasetFolder) 
-        self.getImagesToLoad()
-        self.imagesList_cv = []
-        self.dataset_array = []
+            print("I/O error")    
 
     @staticmethod
     def manualTresholdTester(image, colorspace = cv2.COLOR_BGR2YCrCb, slider_maxCh1 = 255, slider_maxCh2 = 255, slider_maxCh3 = 255):
@@ -153,8 +145,9 @@ class DataLoader:
         tNameCh2_high = 'Ch2_high'
         tNameCh3_low = 'Ch3_low'
         tNameCh3_high = 'Ch3_high'
-        
+            
         def on_trackbar(val):
+
             ch1_low_slider=cv2.getTrackbarPos(tNameCh1_low, title_window)
             ch1_high_slider=cv2.getTrackbarPos(tNameCh1_high, title_window)
             ch2_low_slider=cv2.getTrackbarPos(tNameCh2_low, title_window)
@@ -188,8 +181,48 @@ class DataLoader:
         cv2.waitKey(0)
         cv2.destroyAllWindows()     
 
+    def __init__(self, datasetFolder):
+
+        self.project_dir = os.getcwd()
+        self.dataset_dir = os.path.join(self.project_dir, datasetFolder) 
+        self.getImagesToLoad()
+        self.imagesList_cv = []
+        self.dataset_array = []
+
+
+def handDetRec(frame, key):
+
+    if key == ord('r'):
+        #TODO normalize image size to square - center shape in ROI
+        # img_rgb = dp.resizeImage(frame, 120)
+        img = dp.tresholdImageYCBCR(frame)
+        img = dp.morphologicFiltering(img, (5, 5))
+
+        return img
+    else:
+        return None
+
+        contour = dp.filterContours(img)
+        img_hand_binary = np.zeros((160, 120), np.uint8)
+        if len(contour) == 0:
+            return None
+        else:
+            cv2.fillPoly(img_hand_binary, pts=[contour], color=(255))
+            img_hand = cv2.bitwise_and(img_rgb, img_rgb, mask=img_hand_binary)
+            # dict_adam = fe.getAdamFeatures(contour,img_hand_binary)
+            hog_vec, hog_img = fe.getHog(img_hand, _multichannel=True)
+            return hog_img
+    # cv2.imwrite("/home/tomek/Projects/Hand_gesture_recognition_EIASR/Processed/LoopTest/img.png", hog_img)
+
+ 
+
 
 def main():
+
+    cam = camera.Camera(method=handDetRec, args=[None, None])
+    cam.initCameraLoop()
+
+    return
     
     print("ASL Hand Gestures Recgonition - Initialize")
     #Initialisation
