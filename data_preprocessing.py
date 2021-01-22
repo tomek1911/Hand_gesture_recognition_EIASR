@@ -3,6 +3,8 @@ import numpy as np
 import os
 from enum import Enum
 from dataclasses import dataclass
+
+from feature_extraction import FeatureExtraction as fe
     
 
 class SkinSegmentation:   
@@ -118,9 +120,9 @@ class DataPreprocessing:
             os.makedirs(imwrite_dir)     
         cv2.imwrite(imwrite_path, image, [int(cv2.IMWRITE_JPEG_QUALITY), quality])    
     
-    @staticmethod 
-    def resizeImage(image, shortEdgeLength):
-        rows,cols,_ = image.shape
+    @classmethod 
+    def resizeImage(self, image, shortEdgeLength):
+        rows,cols = image.shape
 
         shortEdge = min(rows,cols)
         longEdge = max(rows, cols) 
@@ -131,6 +133,44 @@ class DataPreprocessing:
         else:
             img_resized = cv2.resize(image,(shortEdgeLength,newLongEdgeLegth),interpolation=cv2.INTER_AREA) #shrink     
         return img_resized 
+
+    @classmethod
+    def centerToSquare(self, img, contour, margin = 10, newSize = 128):
+        x,y,w,h = cv2.boundingRect(contour)
+        # pt1 = (x,y)
+        # pt2 = (x+w,y+h)
+
+        # rectImage = cv2.rectangle(img,pt1,pt2,255,1)
+        roi = img[y:(y+h), x:(x+w)]
+
+        #find centroid - translate to roi origin
+        cx, cy = fe.getCentroid(contour)
+        cx_roi = cx - x
+        cy_roi = cy - y
+
+        # get minimal size of square with centroid at its center        
+        top = cy_roi
+        bottom = h - cy_roi
+        left = cx_roi 
+        right = w - cx_roi
+        
+        #prepare origin for roi and square for centered shape
+        squareBase = max(top, bottom, left, right)
+        cx_sqr = squareBase
+        cy_sqr = squareBase
+
+        pt1x_sqr = squareBase - cx_roi
+        pt1y_sqr = squareBase - cy_roi
+    
+        squareEdge = squareBase*2 + margin
+        square = np.zeros((squareEdge,squareEdge), np.uint8)    
+
+        #copy shape into square image
+        square[(pt1y_sqr+margin):(pt1y_sqr+h+margin),(pt1x_sqr+margin):(pt1x_sqr + w + margin)] = roi        
+
+        #resize image to 128x128 image
+        centered = self.resizeImage(square,newSize)
+        return centered
 
     @staticmethod
     def filterContours(image):

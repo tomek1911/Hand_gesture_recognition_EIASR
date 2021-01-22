@@ -58,6 +58,15 @@ class FeatureExtraction:
         plt.savefig(plot_dir + "//pca2D_hog.png", dpi = 300)
 
     @staticmethod
+    def getCentroid(contour):
+        
+        M = cv2.moments(contour)   
+        cx = int(M['m10'] / M['m00'])
+        cy = int(M['m01'] / M['m00'])
+        return (cx,cy)
+   
+
+    @staticmethod
     def getAdamFeatures(cnt, binary_image):
         features_dict = {}
         M = cv2.moments(cnt)

@@ -219,10 +219,10 @@ def handDetRec(frame, key):
 
 def main():
 
-    cam = camera.Camera(method=handDetRec, args=[None, None])
-    cam.initCameraLoop()
+    # cam = camera.Camera(method=handDetRec, args=[None, None])
+    # cam.initCameraLoop()
 
-    return
+    # return
     
     print("ASL Hand Gestures Recgonition - Initialize")
     #Initialisation
@@ -329,7 +329,27 @@ def main():
         cv2.fillPoly(output, pts =[contour], color=(255,255,255))
         #cv2.drawContours(output, contour, -1, (0, 0, 255), 2) 
         dp.save_image3(output,dLoader_obj_binary.dataset_array[i],"Contours",outPut_dir,95,"png")
-        printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
+        printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)  
+
+    #########################################################################################################################
+    #Center and normalize 
+    #   
+
+    print("Center and normalize image (square shape):")
+    dLoader_obj_segmented = DataLoader("Processed/Contours")   
+    dLoader_obj_segmented.describeLoadedDataPNG()
+    dLoader_obj_binary.loadImagesCv()    
+
+    printProgressBar(0, len(dLoader_obj_segmented.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+    for i in range(0,len(dLoader_obj_segmented.imagesList_dir)):
+        img = dLoader_obj_binary.loadImageCvGray(i)
+
+        img_out = dp.centerToSquare(img, contoursList[i], margin=16)
+
+        dp.save_image3(img_out,dLoader_obj_binary.dataset_array[i],"Squares",outPut_dir,95,"png")
+        printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)  
+
 
     #########################################################################################################################
     #RGB coutout with mask
