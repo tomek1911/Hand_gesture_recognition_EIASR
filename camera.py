@@ -11,6 +11,7 @@ class Camera():
     cap = None
     loopHandle = None
     arguments = None
+    key = ""
 
     def openStream(self):
         self.cap = cv2.VideoCapture(self.cameraId)
@@ -25,25 +26,29 @@ class Camera():
     #atrapa
 
     def initCameraLoop(self, show=True):
-        
+
         if self.openStream():
-            if show:   
+            if show:
                 cv2.namedWindow(self.windowName)
-                
+                cv2.namedWindow("proc image")
+
             while(True):
 
                 ret, frame = self.cap.read()
 
-                #do something here
+                if ret:
 
-                res = self.loopHandle(*self.arguments)    
+                    self.arguments[0] = frame
+                    self.arguments[1] = self.key
+                    res = self.loopHandle(*self.arguments)
 
-                if show:  
-                    cv2.imshow(self.windowName, frame)
+                    if show:
+                        cv2.imshow(self.windowName, frame)
+                        cv2.imshow("proc image", res)
 
-                key = cv2.waitKey(1)
-                if key == ord('q'):
-                    break
+                    self.key = cv2.waitKey(1)
+                    if self.key == ord('q'):
+                        break
 
         self.cap.release()
         cv2.destroyAllWindows()
@@ -64,11 +69,13 @@ def main():
     #Atrapa funkcji przetwarzania obrazu
     #obsluga wejscia i wyjscia
 
-    def cameraLoopMethod(message1, messeage2):
-        print(message1+messeage2)
-        return 0
+    def cameraLoopMethod(frame, key):
+        grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
+        if key == ord('r'):
+            print("Run forest, run!!!")
+        return grayFrame 
 
-    camera = Camera(method=cameraLoopMethod, args=["Hello", "from camera loop"])
+    camera = Camera(method=cameraLoopMethod, args=[None, None])
     camera.initCameraLoop()
 
 
