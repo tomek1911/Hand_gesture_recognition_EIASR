@@ -3,6 +3,7 @@ import numpy as np
 import math 
 import string
 import os
+import joblib
 
 from skimage.feature import hog
 from sklearn.preprocessing import StandardScaler
@@ -26,11 +27,27 @@ class FeatureExtraction:
         pca = PCA(varianceRetained)
         pca.fit(trainFeatures) # fit only for training data
         print(f"PCA maps for: {pca.n_components_} components and retains: {varianceRetained} variance\n")  
+        filename = 'pca.sav'
+        joblib.dump(pca, filename)
 
         trainFeatures = pca.transform(trainFeatures)
         testFeatures = pca.transform(testFeatures)
 
         return trainFeatures, testFeatures 
+
+    @staticmethod
+    def applyPCA_signle(features, varianceRetained=0.95):
+        scaler = StandardScaler()
+        scaler.fit(features) # fit only for training data
+
+        modelFeatures = scaler.transform(features)
+
+        pca = PCA(varianceRetained)
+        pca.fit(modelFeatures)
+        
+        pcaFeatures = pca.transform(modelFeatures)
+
+        return pcaFeatures 
 
     @staticmethod
     def project2D_PCA(allFeatures, labels):

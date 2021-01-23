@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm
 import os
+import joblib
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import MinMaxScaler
@@ -91,11 +92,11 @@ class DataClassification:
   
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, shuffle=True, test_size=test_split_ratio)
 
-        fe.project2D_PCA(X,y)
+        # fe.project2D_PCA(X,y)
      
-        print(f"Training set size: {len(X_train)}x{len(X_train[0])}")
-        X_train, X_test = fe.applyPCA(X_train, X_test)
-        print(f"Training set size after PCA: {len(X_train)}x{len(X_train[0])}")
+        # print(f"Training set size: {len(X_train)}x{len(X_train[0])}")
+        # X_train, X_test = fe.applyPCA(X_train, X_test)
+        # print(f"Training set size after PCA: {len(X_train)}x{len(X_train[0])}")
                 
         param_grid = [
             {'C': [1], 'kernel': ['linear']},
@@ -106,7 +107,9 @@ class DataClassification:
         svc = svm.SVC()
         clf = GridSearchCV(svc, param_grid, verbose=1)
         clf.fit(X_train, y_train)
-        
+        filename = 'SVM_hogRGB_noPCA.sav'
+        joblib.dump(clf, filename)
+
         y_pred = clf.predict(X_test)
         
         if print_res == True:

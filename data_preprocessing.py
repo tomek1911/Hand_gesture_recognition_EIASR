@@ -125,15 +125,27 @@ class DataPreprocessing:
 
         rows,cols = image.shape[0],image.shape[1]
 
-        shortEdge = min(rows,cols)
-        longEdge = max(rows, cols) 
-        resizeRatio = shortEdge / shortEdgeLength
-        newLongEdgeLegth = round (longEdge / resizeRatio) 
-        if newLongEdgeLegth > longEdge:
-            img_resized = cv2.resize(image,(shortEdgeLength,newLongEdgeLegth),interpolation=cv2.INTER_CUBIC) #enlarge 
+        if rows > cols: # vertical image
+            shortEdge = min(rows,cols)
+            longEdge = max(rows, cols) 
+            resizeRatio = shortEdge / shortEdgeLength
+            newLongEdgeLegth = round (longEdge / resizeRatio) 
+            if newLongEdgeLegth > longEdge:
+                img_resized = cv2.resize(image,(shortEdgeLength,newLongEdgeLegth),interpolation=cv2.INTER_CUBIC) #enlarge 
+            else:
+                img_resized = cv2.resize(image,(shortEdgeLength,newLongEdgeLegth),interpolation=cv2.INTER_AREA) #shrink     
+            return img_resized 
         else:
-            img_resized = cv2.resize(image,(shortEdgeLength,newLongEdgeLegth),interpolation=cv2.INTER_AREA) #shrink     
-        return img_resized 
+            shortEdge = min(rows,cols)
+            longEdge = max(rows, cols) 
+            resizeRatio = shortEdge / shortEdgeLength
+            newLongEdgeLegth = round (longEdge / resizeRatio) 
+            if newLongEdgeLegth > longEdge:
+                img_resized = cv2.resize(image,(newLongEdgeLegth,shortEdgeLength),interpolation=cv2.INTER_CUBIC) #enlarge 
+            else:
+                img_resized = cv2.resize(image,(newLongEdgeLegth,shortEdgeLength),interpolation=cv2.INTER_AREA) #shrink     
+            return img_resized 
+
 
     @classmethod
     def centerToSquare(self, img, contour, margin = 10, newSize = 128):

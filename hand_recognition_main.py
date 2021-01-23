@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import csv
 import pandas as pd
+import joblib
 
 from enum import Enum
 
@@ -10,6 +11,9 @@ from data_preprocessing import DataPreprocessing as dp
 from feature_extraction import FeatureExtraction as fe
 from data_classification import DataClassification as dc
 import camera
+
+pcaMatrix = None
+svmModel = None
 
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '#', printEnd = "\r"):
 
@@ -192,37 +196,43 @@ class DataLoader:
 
 def handDetRec(frame, key):
 
+    global pcaMatrix
+    global svmModel
+
     if key == ord('r'):
         #TODO normalize image size to square - center shape in ROI
-        # img_rgb = dp.resizeImage(frame, 120)
-        img = dp.tresholdImageYCBCR(frame)
+        img_rgb = dp.resizeImage(frame, 120)
+        img = dp.tresholdImageYCBCR(img_rgb)
         img = dp.morphologicFiltering(img, (5, 5))
-
-        return img
-    else:
-        return None
-
         contour = dp.filterContours(img)
-        img_hand_binary = np.zeros((160, 120), np.uint8)
-        if len(contour) == 0:
-            return None
-        else:
+        img_hand_binary = np.zeros(img_rgb.shape[0:2], np.uint8)
+        if len(contour) != 0:
             cv2.fillPoly(img_hand_binary, pts=[contour], color=(255))
-            img_hand = cv2.bitwise_and(img_rgb, img_rgb, mask=img_hand_binary)
-            # dict_adam = fe.getAdamFeatures(contour,img_hand_binary)
-            hog_vec, hog_img = fe.getHog(img_hand, _multichannel=True)
-            return hog_img
-    # cv2.imwrite("/home/tomek/Projects/Hand_gesture_recognition_EIASR/Processed/LoopTest/img.png", hog_img)
+        # img_hand = cv2.bitwise_and(img_rgb, img_rgb, mask=img_hand_binary)
 
- 
+        mask = dp.centerToSquare(img_hand_binary, contour, margin=16)
+        rgb = dp.centerToSquare(img_rgb, contour, margin=16)
+        coutout_rgb = cv2.bitwise_and(rgb,rgb,mask = mask)
+        hog_vec, hog_img = fe.getHog(coutout_rgb,_multichannel=True)
+        hog_vec=np.reshape(hog_vec,(1,-1))
+        # scaled_data = pcaMatrix.transform(hog_vec)
+        y_pred = svmModel.predict(hog_vec)
+        print(f"Predicted class: {y_pred}")
 
+        return mask
+    else:
+        return None 
 
 def main():
+    global pcaMatrix
+    global svmModel
 
-    # cam = camera.Camera(method=handDetRec, args=[None, None])
-    # cam.initCameraLoop()
+    pcaMatrix = joblib.load("./pca.sav")
+    svmModel = joblib.load("./SVM_hogRGB_noPCA.sav")
 
-    # return
+    cam = camera.Camera(method=handDetRec, args=[None, None])
+    cam.initCameraLoop()
+    return
     
     print("ASL Hand Gestures Recgonition - Initialize")
     #Initialisation
@@ -371,25 +381,28 @@ def main():
 
 
     #########################################################################################################################
-    #RGB coutout with mask
+    #RGB coutout with mask - squared
     
     print("Cuting out rgb images with segmented hand mask:")
-    dLoader_obj_segmented = DataLoader("Processed/Contours")   
-    dLoader_obj_segmented.describeLoadedDataPNG()
-    dLoader_obj_binary.loadImagesCv()
+    dLoader_obj_mask_square = DataLoader("Processed/Squares")   
+    dLoader_obj_rgb_square = DataLoader("Processed/SquaresRGB") 
 
-    printProgressBar(0, len(dLoader_obj_segmented.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+    dLoader_obj_rgb_square.describeLoadedDataPNG()
+    dLoader_obj_mask_square.loadImagesCv()
+    dLoader_obj_rgb_square.loadImagesCv()
 
-    for i in range(0,len(dLoader_obj_segmented.imagesList_dir)):
-        img = dLoader_obj_resized.loadImageCv(i)
-        mask_img = dLoader_obj_segmented.loadImageCvGray(i) # mask       
+    printProgressBar(0, len(dLoader_obj_rgb_square.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+    for i in range(0,len(dLoader_obj_rgb_square.imagesList_dir)):
+        img = dLoader_obj_rgb_square.loadImageCv(i) # RGB image
+        mask_img = dLoader_obj_mask_square.loadImageCvGray(i) # mask       
         res = cv2.bitwise_and(img,img,mask = mask_img)
-        dp.save_image3(res,dLoader_obj_segmented.dataset_array[i],"CutoutRGB",outPut_dir,95,"png")
-        printProgressBar(i + 1, len(dLoader_obj_segmented.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
+        dp.save_image3(res,dLoader_obj_rgb_square.dataset_array[i],"CutoutRGB_square",outPut_dir,95,"png")
+        printProgressBar(i + 1, len(dLoader_obj_rgb_square.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
       
 
     #########################################################################################################################
-    #FEATURES I - handmade
+    # #FEATURES I - handmade
 
     print("Features I - handmade:")
     dLoader_obj_cont = DataLoader("Processed/Contours")   
@@ -397,21 +410,21 @@ def main():
     dLoader_obj_cont.loadImagesCv() #wczytaj wszystkie zdjecia z folderu
     featuresList = []    
 
-    printProgressBar(0, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+    # printProgressBar(0, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
-    for i in range(0,len(dLoader_obj_cont.imagesList_dir)):
-        img = dLoader_obj_cont.loadImageCvGray(i)
-        cnt = contoursList[i]
-        dict_adam = fe.getAdamFeatures(cnt,img) 
-        dict_adam['label'] = dLoader_obj_cont.dataset_array[i][0]
-        featuresList.append(dict_adam)
-        printProgressBar(i + 1, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
+    # for i in range(0,len(dLoader_obj_cont.imagesList_dir)):
+    #     img = dLoader_obj_cont.loadImageCvGray(i)
+    #     cnt = contoursList[i]
+    #     dict_adam = fe.getAdamFeatures(cnt,img) 
+    #     dict_adam['label'] = dLoader_obj_cont.dataset_array[i][0]
+    #     featuresList.append(dict_adam)
+    #     printProgressBar(i + 1, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
 
-    #add features I to dataframe, save them to csv file
-    df_features = pd.DataFrame(featuresList)
-    project_path = os.getcwd()
-    path_csv = os.path.join(project_path, "CSV", "adam_features.csv") 
-    df_features.to_csv(path_csv)
+    # #add features I to dataframe, save them to csv file
+    # df_features = pd.DataFrame(featuresList)
+    # project_path = os.getcwd()
+    # path_csv = os.path.join(project_path, "CSV", "adam_features.csv") 
+    # df_features.to_csv(path_csv)
 
     #########################################################################################################################
     #FEATURES IIa - hog (!long calc)
@@ -460,7 +473,34 @@ def main():
     # df_features2b = pd.DataFrame(hogRGBFeaturesList)
     # project_path = os.getcwd()
     # path_csv_hog_rgb = os.path.join(project_path, "CSV", "hog_rgb_features.csv") 
-    # df_features2b.to_csv(path_csv_hog_rgb)        
+    # df_features2b.to_csv(path_csv_hog_rgb)   
+
+    #########################################################################################################################
+    #FEATURES IIc - hog RGB - for square images
+
+    # dLoader_obj_rgbmasked = DataLoader("Processed/CutoutRGB_square")   
+    # dLoader_obj_rgbmasked.describeLoadedDataPNG()
+    # dLoader_obj_rgbmasked.loadImagesCv() #wczytaj wszystkie zdjecia z folderu 
+
+    # print("Features II - hog (rgb images):")
+    # hogRGBFeaturesList = []    
+    # hogImgLabels = []
+    # printProgressBar(0, len(dLoader_obj_rgbmasked.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+    # for i in range(0,len(dLoader_obj_rgbmasked.imagesList_dir)):
+    #     img = dLoader_obj_rgbmasked.loadImageCv(i)
+    #     hog_vec, hog_img = fe.getHog(img,_multichannel=True)
+    #     hogRGBFeaturesList.append(hog_vec)
+    #     hogImgLabels.append(dLoader_obj_rgbmasked.dataset_array[i][0])
+    #     dp.save_image3(hog_img,dLoader_obj_rgbmasked.dataset_array[i],"HogRGB",outPut_dir,95,"png")
+    #     printProgressBar(i + 1, len(dLoader_obj_rgbmasked.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
+
+    # #add features IIb to dataframe, save them to csv file
+    # df_features2b = pd.DataFrame(hogRGBFeaturesList)
+    # project_path = os.getcwd()
+    # path_csv_hog_rgb = os.path.join(project_path, "CSV", "hog_rgb_features_sqr.csv") 
+    # df_features2b.to_csv(path_csv_hog_rgb)   
+         
 
     #hog calculation takes log for dataset so we read features from file
     hogImgLabels = []    
@@ -471,7 +511,7 @@ def main():
     featuresFile = ''
 
     if useRGB_hog_features:
-        featuresFile = 'hog_rgb_features'
+        featuresFile = 'hog_rgb_features_sqr'
         print("Using RGB HOG features")
     else:
         featuresFile = 'hog_features'
@@ -488,9 +528,9 @@ def main():
     # CLASSIFICATION
     # k-NN classifier
 
-    print("k-NN classifier, features I:")
-    X, y = dc.getXyfromCSV(path_csv)
-    dc.fitKnn(X,y,print_res=True)
+    # print("k-NN classifier, features I:")
+    # X, y = dc.getXyfromCSV(path_csv)
+    # dc.fitKnn(X,y,print_res=True)
     
     # SVM classifier (<1min)
     print("SVM classifier, features II:")
