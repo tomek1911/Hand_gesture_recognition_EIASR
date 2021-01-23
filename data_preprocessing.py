@@ -122,7 +122,8 @@ class DataPreprocessing:
     
     @classmethod 
     def resizeImage(self, image, shortEdgeLength):
-        rows,cols = image.shape
+
+        rows,cols = image.shape[0],image.shape[1]
 
         shortEdge = min(rows,cols)
         longEdge = max(rows, cols) 
@@ -162,11 +163,16 @@ class DataPreprocessing:
         pt1x_sqr = squareBase - cx_roi
         pt1y_sqr = squareBase - cy_roi
     
-        squareEdge = squareBase*2 + margin
-        square = np.zeros((squareEdge,squareEdge), np.uint8)    
+        squareEdge = squareBase*2 + margin * 2
+
 
         #copy shape into square image
-        square[(pt1y_sqr+margin):(pt1y_sqr+h+margin),(pt1x_sqr+margin):(pt1x_sqr + w + margin)] = roi        
+        if len(roi.shape) == 3:
+            square = np.zeros((squareEdge,squareEdge,3), np.uint8)    
+            square[(pt1y_sqr+margin):(pt1y_sqr+h+margin),(pt1x_sqr+margin):(pt1x_sqr + w + margin),:] = roi   
+        else:
+            square = np.zeros((squareEdge,squareEdge), np.uint8)    
+            square[(pt1y_sqr+margin):(pt1y_sqr+h+margin),(pt1x_sqr+margin):(pt1x_sqr + w + margin)] = roi        
 
         #resize image to 128x128 image
         centered = self.resizeImage(square,newSize)

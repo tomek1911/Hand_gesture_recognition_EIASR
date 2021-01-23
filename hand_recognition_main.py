@@ -333,7 +333,7 @@ def main():
 
     #########################################################################################################################
     #Center and normalize 
-    #   
+    # segmented hand - mask
 
     print("Center and normalize image (square shape):")
     dLoader_obj_segmented = DataLoader("Processed/Contours")   
@@ -343,12 +343,31 @@ def main():
     printProgressBar(0, len(dLoader_obj_segmented.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
     for i in range(0,len(dLoader_obj_segmented.imagesList_dir)):
-        img = dLoader_obj_binary.loadImageCvGray(i)
+        img = dLoader_obj_segmented.loadImageCvGray(i)
 
         img_out = dp.centerToSquare(img, contoursList[i], margin=16)
 
-        dp.save_image3(img_out,dLoader_obj_binary.dataset_array[i],"Squares",outPut_dir,95,"png")
-        printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)  
+        dp.save_image3(img_out,dLoader_obj_segmented.dataset_array[i],"Squares",outPut_dir,95,"png")
+        printProgressBar(i + 1, len(dLoader_obj_segmented.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)  
+     
+    #########################################################################################################################
+    #Center and normalize 
+    # rgb_images
+
+    print("Center and normalize image - rgb images:")
+    dLoader_obj_resized = DataLoader("Processed/ResizedImages")   
+    dLoader_obj_resized.describeLoadedDataPNG()
+    dLoader_obj_resized.loadImagesCv() 
+
+    printProgressBar(0, len(dLoader_obj_resized.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+    for i in range(0,len(dLoader_obj_resized.imagesList_dir)):
+        img = dLoader_obj_resized.loadImageCv(i)
+
+        img_out = dp.centerToSquare(img, contoursList[i], margin=16)
+
+        dp.save_image3(img_out,dLoader_obj_resized.dataset_array[i],"SquaresRGB",outPut_dir,95,"png")
+        printProgressBar(i + 1, len(dLoader_obj_resized.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)  
 
 
     #########################################################################################################################
