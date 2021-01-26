@@ -45,6 +45,7 @@ class Camera():
                 cv2.namedWindow(self.windowName)
                 # cv2.namedWindow("subtracted background")
                 cv2.namedWindow("proc image")
+                cv2.moveWindow("proc image", 110,430);
 
             while(True):
 
