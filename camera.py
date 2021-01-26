@@ -1,5 +1,5 @@
-
 import cv2
+import string
 
 class Camera():
     
@@ -13,6 +13,9 @@ class Camera():
     key = ""
     firstFrame = None
     firstFrameSet = False
+    onceSuccess = False
+    lastResult = "" 
+
 
     def openStream(self):
         self.cap = cv2.VideoCapture(self.cameraId)
@@ -25,6 +28,15 @@ class Camera():
         return True 
 
     #atrapa
+
+    def putText(self, image, text, position = (10,25)):
+        font = cv2.FONT_HERSHEY_SIMPLEX   
+        fontScale = 0.5
+        color = (0, 255, 0) 
+        thickness = 1
+        cv2.putText(image, text, position, font,  
+                   fontScale, color, thickness, cv2.LINE_AA) 
+        return image
 
     def initCameraLoop(self, show=True):
 
@@ -43,14 +55,30 @@ class Camera():
 
                 self.arguments[0] = frame
                 self.arguments[1] = self.key
-                res = self.loopHandle(*self.arguments)
+                res, result = self.loopHandle(*self.arguments)
+
+
+
+                if result is not None: 
+                    self.lastResult = result
+                    self.onceSuccess = True
+                    if result[0] is "clear":
+                        self.onceSuccess = False
                 # sub = self.backgroundSubtraction(frame)
 
                 if show:
-                    cv2.imshow(self.windowName, frame)
-                    # cv2.imshow("subtracted background",sub)
+
                     if res is not None:
                         cv2.imshow("proc image", res)
+
+                    
+                    
+                    if self.onceSuccess:
+                        self.putText(frame,f"Detector result: {self.lastResult[0]}")                        
+                    else:
+                        self.putText(frame,"ASL detector - press 'r' to detect")
+
+                    cv2.imshow(self.windowName, frame)
 
                 self.key = cv2.waitKey(1)
                 if self.key == ord('q'):

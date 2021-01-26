@@ -199,6 +199,12 @@ def handDetRec(frame, key):
     global pcaMatrix
     global svmModel
 
+    outputImage = None
+    outputClass = None
+
+    if key == ord('c'):
+        outputClass = ["clear"]
+
     if key == ord('r'):
         #TODO normalize image size to square - center shape in ROI
         img_rgb = dp.resizeImage(frame, 120)
@@ -208,20 +214,22 @@ def handDetRec(frame, key):
         img_hand_binary = np.zeros(img_rgb.shape[0:2], np.uint8)
         if len(contour) != 0:
             cv2.fillPoly(img_hand_binary, pts=[contour], color=(255))
-        # img_hand = cv2.bitwise_and(img_rgb, img_rgb, mask=img_hand_binary)
+          # img_hand = cv2.bitwise_and(img_rgb, img_rgb, mask=img_hand_binary)
+            mask = dp.centerToSquare(img_hand_binary, contour, margin=16)
+            rgb = dp.centerToSquare(img_rgb, contour, margin=16)
+            coutout_rgb = cv2.bitwise_and(rgb,rgb,mask = mask)
+            hog_vec, hog_img = fe.getHog(coutout_rgb,_multichannel=True)
+            hog_vec=np.reshape(hog_vec,(1,-1))
+            # scaled_data = pcaMatrix.transform(hog_vec)
+            y_pred = svmModel.predict(hog_vec)
+            print(f"Predicted class: {y_pred}")
+            return mask, y_pred
+        else:
+            print('Probably no hand in the image')
+            return img_rgb, None
 
-        mask = dp.centerToSquare(img_hand_binary, contour, margin=16)
-        rgb = dp.centerToSquare(img_rgb, contour, margin=16)
-        coutout_rgb = cv2.bitwise_and(rgb,rgb,mask = mask)
-        hog_vec, hog_img = fe.getHog(coutout_rgb,_multichannel=True)
-        hog_vec=np.reshape(hog_vec,(1,-1))
-        # scaled_data = pcaMatrix.transform(hog_vec)
-        y_pred = svmModel.predict(hog_vec)
-        print(f"Predicted class: {y_pred}")
-
-        return mask
     else:
-        return None 
+        return outputImage, outputClass
 
 def main():
     global pcaMatrix
