@@ -2,6 +2,7 @@ import cv2
 import string
 
 class Camera():
+    """Class provides tools to open camera stream and run main image recognition loop."""
     
     cameraId = 0
     width = 0
@@ -20,14 +21,12 @@ class Camera():
     def openStream(self):
         self.cap = cv2.VideoCapture(self.cameraId)
         if not self.cap.isOpened():
-            print("Could not open video device")
+            print(f"ERROR: Could not open video device - id: {self.cameraId}.")
             return False
 
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)   
         return True 
-
-    #atrapa
 
     def putText(self, image, text, position = (10,25)):
         font = cv2.FONT_HERSHEY_SIMPLEX   
@@ -43,36 +42,36 @@ class Camera():
         if self.openStream():
             if show:
                 cv2.namedWindow(self.windowName)
-                # cv2.namedWindow("subtracted background")
                 cv2.namedWindow("proc image")
-                cv2.moveWindow("proc image", 110,430);
 
+                # window position is adjusted for screen with 2560x1440 resolution 
+                cv2.moveWindow("proc image", 110,430); 
+
+            # CAMERA LOOP
             while(True):
 
                 ret, frame = self.cap.read()
 
                 if not ret:
+                    print("ERROR: Camera stream - no image returned")
                     break
 
+                # pack arguments and run hand recognition from handle 
                 self.arguments[0] = frame
                 self.arguments[1] = self.key
                 res, result = self.loopHandle(*self.arguments)
 
-
-
+                # interface behaviour                
                 if result is not None: 
                     self.lastResult = result
                     self.onceSuccess = True
-                    if result[0] is "clear":
+                    #clear on screen text if 'c' is pressed
+                    if result[0] == "clear":
                         self.onceSuccess = False
-                # sub = self.backgroundSubtraction(frame)
 
                 if show:
-
                     if res is not None:
-                        cv2.imshow("proc image", res)
-
-                    
+                        cv2.imshow("proc image", res)                
                     
                     if self.onceSuccess:
                         self.putText(frame,f"Detector result: {self.lastResult[0]}")                        
@@ -88,7 +87,7 @@ class Camera():
         self.cap.release()
         cv2.destroyAllWindows()
 
-
+    # only for development - test how background subtraction works in case segmentation fails 
     def backgroundSubtraction(self, frame):
         if self.firstFrameSet == False:
             first_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -100,7 +99,6 @@ class Camera():
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             gray = cv2.GaussianBlur(gray, (7, 7), 0)
             difference = cv2.absdiff(gray, self.firstFrame)
-            #+cv2.THRESH_OTSU
             thresh = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)[1]
      
             thresh = cv2.dilate(thresh, None, iterations=2)
@@ -115,21 +113,17 @@ class Camera():
         self.loopHandle = method
         self.arguments = args
 
+# camera sandbox - in case of camera stream problems - debug it from here
+# def main():
 
-def main():
+#     def cameraLoopMethod(frame, key):
+#         grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
+#         if key == ord('r'):
+#             print("Message from camera loop method")
+#         return grayFrame 
 
-    #Atrapa funkcji przetwarzania obrazu
-    #obsluga wejscia i wyjscia
+#     camera = Camera(method=cameraLoopMethod, args=[None, None])
+#     camera.initCameraLoop()
 
-    def cameraLoopMethod(frame, key):
-        grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGRA2GRAY)
-        if key == ord('r'):
-            print("Run forest, run!!!")
-        return grayFrame 
-
-    camera = Camera(method=cameraLoopMethod, args=[None, None])
-    camera.initCameraLoop()
-
-
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

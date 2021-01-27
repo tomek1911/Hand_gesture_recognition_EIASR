@@ -16,7 +16,7 @@ from sklearn.metrics import plot_confusion_matrix
 from feature_extraction import FeatureExtraction as fe
 
 class DataClassification:
-    """Class provides tools to classify images using features."""
+    """Class provides tools to classify images using extracted features."""
     
     @staticmethod
     def getXyfromCSV(path_features_csv):
@@ -79,7 +79,7 @@ class DataClassification:
         X_train = scaler.fit_transform(X_train)
         X_test = scaler.transform(X_test)
 
-        knn = KNeighborsClassifier() #TODO grid-search, cross-validation parameters-tuning
+        knn = KNeighborsClassifier()
         knn.fit(X_train, y_train)
 
         if print_res==True:
@@ -92,24 +92,33 @@ class DataClassification:
   
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, shuffle=True, test_size=test_split_ratio)
 
+        # PCA - disabled for camera stream version
         # fe.project2D_PCA(X,y)
      
         # print(f"Training set size: {len(X_train)}x{len(X_train[0])}")
         # X_train, X_test = fe.applyPCA(X_train, X_test)
         # print(f"Training set size after PCA: {len(X_train)}x{len(X_train[0])}")
                 
+        # SVM parameters grid search 
         param_grid = [
             {'C': [1], 'kernel': ['linear']},
             # {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
             # {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
         ]
         
+        # search for best parameters and fit SVM
         svc = svm.SVC()
         clf = GridSearchCV(svc, param_grid, verbose=1)
         clf.fit(X_train, y_train)
+       
+        # IMPORTANT: for final model use all data avalible
+        # clf.fit(X, y)
+
+        # save created model (clf = classifier) to file
         filename = 'SVM_hogRGB_noPCA.sav'
         joblib.dump(clf, filename)
 
+        # make prediction on test set
         y_pred = clf.predict(X_test)
         
         if print_res == True:

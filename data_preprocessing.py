@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from feature_extraction import FeatureExtraction as fe
     
+# Class for tests - chose the best colorspace and set proper thresholds for each channel
 
 class SkinSegmentation:   
 # HSV: 0.23 < S < 0.68, 0 < H < 50
@@ -24,10 +25,10 @@ class SkinSegmentation:
 
         @dataclass
         class YCBCR_Threshold:
-            Y_min: int = 50 #Blue channel [0]
+            Y_min: int = 50 #Blue channel [0] CV
             Y_max: int = 255
-            Cr_min: int = 140 #Green channel [1]
-            Cr_max: int = 180
+            Cr_min: int = 140 #Green channel [1] 
+            Cr_max: int = 180 
             Cb_min: int = 95 # Red channel [2]
             Cb_max: int = 125
 
@@ -70,9 +71,7 @@ class DataPreprocessing:
                 img_resized = cv2.resize(img,(shortEdgeLength,newLongEdgeLegth),interpolation=cv2.INTER_AREA)        
                 resized_images.append(img_resized)
         
-        return resized_images
-
-   
+        return resized_images   
         
     def save_processed_images(self, processedImages, folderName, quality):
         for img, imgData in zip(processedImages, self.imagesDetails):
@@ -85,6 +84,7 @@ class DataPreprocessing:
             else:
                 os.makedirs(imwrite_dir)
                 cv2.imwrite(imwrite_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
+
     @staticmethod
     def save_image(image, imgData, folderName, output_dir, quality=80, extension="jpg"):
         sufix = ''
@@ -97,7 +97,7 @@ class DataPreprocessing:
         if not os.path.isdir(imwrite_dir):
             os.makedirs(imwrite_dir)     
         cv2.imwrite(imwrite_path, image, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
-
+    
     @staticmethod
     def save_image2(image, imgName, folderName, output_dir, quality=80, extension="jpg"):
 
@@ -113,7 +113,6 @@ class DataPreprocessing:
        
         
         filename = imgData[3]+'.'+extension
-
         imwrite_dir = os.path.join(output_dir, folderName)
         imwrite_path = os.path.join(imwrite_dir, filename)
         if not os.path.isdir(imwrite_dir):
@@ -121,11 +120,15 @@ class DataPreprocessing:
         cv2.imwrite(imwrite_path, image, [int(cv2.IMWRITE_JPEG_QUALITY), quality])    
     
     @classmethod 
+    # method to resize horizontal and vertical image 
+    # needs length of shorter edge of the image
+    # uses interpolation - detects enlargement and shrinking
     def resizeImage(self, image, shortEdgeLength):
 
         rows,cols = image.shape[0],image.shape[1]
 
-        if rows > cols: # vertical image
+        if rows > cols: 
+            # vertical image
             shortEdge = min(rows,cols)
             longEdge = max(rows, cols) 
             resizeRatio = shortEdge / shortEdgeLength
@@ -135,7 +138,8 @@ class DataPreprocessing:
             else:
                 img_resized = cv2.resize(image,(shortEdgeLength,newLongEdgeLegth),interpolation=cv2.INTER_AREA) #shrink     
             return img_resized 
-        else:
+        else: 
+            # horizontal image
             shortEdge = min(rows,cols)
             longEdge = max(rows, cols) 
             resizeRatio = shortEdge / shortEdgeLength
@@ -149,14 +153,12 @@ class DataPreprocessing:
 
     @classmethod
     def centerToSquare(self, img, contour, margin = 10, newSize = 128):
-        x,y,w,h = cv2.boundingRect(contour)
-        # pt1 = (x,y)
-        # pt2 = (x+w,y+h)
-
-        # rectImage = cv2.rectangle(img,pt1,pt2,255,1)
+        
+        # get bounding minimal rectangle around contour
+        x,y,w,h = cv2.boundingRect(contour)       
         roi = img[y:(y+h), x:(x+w)]
 
-        #find centroid - translate to roi origin
+        #find centroid - translate it to the roi origin
         cx, cy = fe.getCentroid(contour)
         cx_roi = cx - x
         cy_roi = cy - y
@@ -175,8 +177,9 @@ class DataPreprocessing:
         pt1x_sqr = squareBase - cx_roi
         pt1y_sqr = squareBase - cy_roi
     
+        # adds margin between border of image and copied roi 
+        # for calculation of gradient on edges
         squareEdge = squareBase*2 + margin * 2
-
 
         #copy shape into square image
         if len(roi.shape) == 3:
@@ -186,7 +189,7 @@ class DataPreprocessing:
             square = np.zeros((squareEdge,squareEdge), np.uint8)    
             square[(pt1y_sqr+margin):(pt1y_sqr+h+margin),(pt1x_sqr+margin):(pt1x_sqr + w + margin)] = roi        
 
-        #resize image to 128x128 image
+        #resize image to 128x128 image (by deafult)
         centered = self.resizeImage(square,newSize)
         return centered
 
@@ -207,7 +210,7 @@ class DataPreprocessing:
             biggestContourId = contoursArea.index(max(contoursArea))
             return contours[biggestContourId]     
             
-
+    # universal color tresholding method - accepts HSV, YUV and YCbCr colorspaces
     def skinDetection(self, colorSpace, image):
 
         skinSeg_obj = SkinSegmentation()
@@ -222,10 +225,6 @@ class DataPreprocessing:
             img_hsv_tresholded = cv2.inRange(img_hsv, lowerBound,  upperBound)
             return img_hsv, img_hsv_tresholded
 
-            # cv2.imshow("HSV_img", img_hsv) 
-            # cv2.imshow("HSV_tresh", img_hsv_tresholded) 
-            # cv2.waitKey(0)  
-        
         elif colorSpace.value == self.COLORSPACE.YUV.value:
             img_cvt = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
 
@@ -239,7 +238,7 @@ class DataPreprocessing:
         elif colorSpace.value == self.COLORSPACE.YCBCR.value:
             img_cvt = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
             
-            thr = skinSeg_obj.YCBCR_Threshold() # yuvTresholdValues
+            thr = skinSeg_obj.YCBCR_Threshold() # yCbcrTresholdValues
             lowerBound = (thr.Y_min, thr.Cr_min, thr.Cb_min)
             upperBound = (thr.Y_max, thr.Cr_max, thr.Cb_max)
             img_cvt_tresholded = cv2.inRange(img_cvt, lowerBound,  upperBound)
@@ -267,13 +266,12 @@ class DataPreprocessing:
         return img_cvt_tresholded       
     
     @staticmethod
+    # use open first to get rid of noise (erosion first)    
     def morphologicFiltering(img,size):
         kernel = np.ones(size, np.uint8)
         img_open = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
         img_open_close = cv2.morphologyEx(img_open, cv2.MORPH_CLOSE, kernel)
-        return img_open_close
-   
-      
+        return img_open_close     
 
 
     def __init__(self, imagesList_cv=None, imagesDetails=None, output_dir=None):

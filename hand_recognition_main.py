@@ -1,3 +1,12 @@
+###############################################################
+# EIASR 2021 - Project - HAND GESTURE RECOGNITION             # 
+# Warsaw University of Technology                             #
+#                                                             #
+# Mentor: dr eng. Artur Wilkowski                             #
+#                                                             #
+# Authors: Szczepański Tomasz, Barej Adam, Drobinin Oleksandr #
+###############################################################
+
 import os
 import numpy as np
 import cv2
@@ -12,6 +21,7 @@ from feature_extraction import FeatureExtraction as fe
 from data_classification import DataClassification as dc
 import camera
 
+# global variables 
 pcaMatrix = None
 svmModel = None
 
@@ -25,6 +35,7 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     if iteration == total: 
         print()
 
+# Data loader and utilities
 class DataLoader:
     """Class to load data from dataset."""
     
@@ -33,6 +44,7 @@ class DataLoader:
     imagesList_dir = []
     imagesList_cv = []
     dataset_array = [] 
+    errorCheck = False
 
     def getImagesToLoad(self):
 
@@ -43,6 +55,8 @@ class DataLoader:
                 print ("Found: {0} images in folder.".format(len(self.imagesList_dir)))
         else:
             print("Provided directory does not exist!")
+            self.errorCheck = True
+                    
 
     def describeLoadedData(self):
         if self.imagesList_dir:
@@ -64,6 +78,7 @@ class DataLoader:
                 self.dataset_array.append([elem, elem[0], elem[2], author])
         else:
             print("Provided list is empty")
+            self.errorCheck = True
 
     def describeLoadedDataPNG(self):
 
@@ -95,8 +110,6 @@ class DataLoader:
                 if loadedImages >= im_num and im_num !=0:
                     break
             print ("Loaded: {0} images.".format(len(self.imagesList_cv)))
-        # else:
-            # print("List of images to load is empty or images are already loaded")
 
     def loadImageCv(self,id):
         if self.imagesList_dir:
@@ -191,12 +204,18 @@ class DataLoader:
         self.dataset_dir = os.path.join(self.project_dir, datasetFolder) 
         self.getImagesToLoad()
         self.imagesList_cv = []
-        self.dataset_array = []
+        self.dataset_array = []        
+########################
+# GESTURE RECOGONITION #
+########################
+# Method that is passed to camera stream
+# it uses image preprocessing, features extraction
+# and classification that have been tested 
+# during development stage
+# 
+def gestureRecognition (frame, key):
 
-
-def handDetRec(frame, key):
-
-    global pcaMatrix
+    #global pcaMatrix
     global svmModel
 
     outputImage = None
@@ -206,7 +225,10 @@ def handDetRec(frame, key):
         outputClass = ["clear"]
 
     if key == ord('r'):
-        #TODO normalize image size to square - center shape in ROI
+
+        #######################
+        # image preprocessing #
+        #######################
         img_rgb = dp.resizeImage(frame, 120)
         img = dp.tresholdImageYCBCR(img_rgb)
         img = dp.morphologicFiltering(img, (5, 5))
@@ -214,20 +236,27 @@ def handDetRec(frame, key):
         img_hand_binary = np.zeros(img_rgb.shape[0:2], np.uint8)
         if len(contour) != 0:
             cv2.fillPoly(img_hand_binary, pts=[contour], color=(255))
-          # img_hand = cv2.bitwise_and(img_rgb, img_rgb, mask=img_hand_binary)
             mask = dp.centerToSquare(img_hand_binary, contour, margin=16)
             rgb = dp.centerToSquare(img_rgb, contour, margin=16)
-            coutout_rgb = cv2.bitwise_and(rgb,rgb,mask = mask)
-            hog_vec, hog_img = fe.getHog(coutout_rgb,_multichannel=True)
+            coutout_rgb = cv2.bitwise_and(rgb, rgb, mask=mask)
+
+            ######################
+            # feature extraction #
+            ######################
+            hog_vec, _ = fe.getHog(coutout_rgb,_multichannel=True)
+
+            #################
+            # classification#
+            #################
             hog_vec=np.reshape(hog_vec,(1,-1))
             # scaled_data = pcaMatrix.transform(hog_vec)
             y_pred = svmModel.predict(hog_vec)
+
             print(f"Predicted class: {y_pred}")
             return mask, y_pred
         else:
             print('Probably no hand in the image')
             return img_rgb, None
-
     else:
         return outputImage, outputClass
 
@@ -236,30 +265,53 @@ def main():
     ###########################
     # INTERACTIVE  CLASSIFIER #
     ###########################
-    global pcaMatrix
-    global svmModel
 
-    pcaMatrix = joblib.load("./pca.sav")
-    svmModel = joblib.load("./SVM_hogRGB_noPCA.sav")
+    # to run interactive classifier make it True
+    # requires classifier model *.sav
+    runCameraStream = True
 
-    cam = camera.Camera(method=handDetRec, args=[None, None])
-    cam.initCameraLoop()
-    return
+    if runCameraStream:
+
+        global pcaMatrix
+        global svmModel
+
+        #pcaMatrix = joblib.load("./pca.sav")
+        if os.path.isfile("./SVM_hogRGB_noPCA.sav"):
+            svmModel = joblib.load("./SVM_hogRGB_noPCA.sav")
+        else:
+            print("ERROR: Missing SVM classifier file")
+            return
+
+        cam = camera.Camera(method=gestureRecognition, args=[None, None])
+        cam.initCameraLoop()
+        return
 
     #######################
     # SANDBOX DEVELOPMENT #
     #######################
 
-    print("ASL Hand Gestures Recgonition - Initialize")
+    # IMPORTANT - Development part to run needs:
+    #
+    #   "Data" folder with dataset
+    #   "Processed" folder to store images
+    #   "Plots" folder to store plots
+    #   "CSV" folder to store features
+   
+    print("ASL Hand Gestures Recgonition DEVELOPMENT MODE - Initialize")
     #Initialisation
     dLoader_obj = DataLoader("Data") # load dataset images directories
+    if dLoader_obj.errorCheck:
+        print("ERROR: Missing necessary files")
+        return    
     dLoader_obj.describeLoadedData() # read labels and images id 
     print(*dLoader_obj.dataset_array[0:5], sep="\n")  # print labels and images id - first 5   
 
     #Test tresholds for data_processing
+    # manual fine tuning of treshold parameters
+    
     dLoader_obj.loadImagesCv(1) # load one of images 
     image = dLoader_obj.imagesList_cv[0]
-    #DataLoader.manualTresholdTester(image) - uncomment
+    #DataLoader.manualTresholdTester(image)
 
     # assign output folder path for processed images
     outPut_dir = os.path.join(dLoader_obj.project_dir,"Processed") 
@@ -269,7 +321,9 @@ def main():
     # DEVELOMPENT STAGES - workflow - read images from file, process, save to file 
     #
     ##########################################################################################################################
-    #RESIZE
+    #RESIZE - WARNING - takes long
+
+
     # print("Resize original datset images:")
     # printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
@@ -284,6 +338,9 @@ def main():
     
     print("Thresholding - YCbCr colorspace based:")
     dLoader_obj_resized = DataLoader("Processed/ResizedImages")   
+    if dLoader_obj_resized.errorCheck:
+        print("ERROR: Missing necessary files")
+        return  
     dLoader_obj_resized.describeLoadedDataPNG()
     dLoader_obj_resized.loadImagesCv()
 
@@ -297,11 +354,11 @@ def main():
         printProgressBar(i + 1, len(dLoader_obj_resized.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
     #########################################################################################################################
-    #RESULTS PREVIEW - create figures of concatenated images - 2520x1440px - 189 images
+    #RESULTS PREVIEW - create figures of concatenated images - 2520x1440px - 189 images - for prototype report
     
-    dLoader_obj_tresh = DataLoader("Processed/TresholdedImages")   
-    dLoader_obj_tresh.describeLoadedDataPNG()
-    dLoader_obj_tresh.loadImagesCv()
+    # dLoader_obj_tresh = DataLoader("Processed/TresholdedImages")   
+    # dLoader_obj_tresh.describeLoadedDataPNG()
+    # dLoader_obj_tresh.loadImagesCv()
     
     # tresholdedImagesList = dLoader_obj_tresh.imagesList_cv         
     # fullimg = np.zeros((0,2520),np.uint8)
@@ -326,6 +383,10 @@ def main():
 
     #########################################################################################################################
     #MORPHOLOGIC FILTER
+
+    dLoader_obj_tresh = DataLoader("Processed/TresholdedImages")   
+    dLoader_obj_tresh.describeLoadedDataPNG()
+    dLoader_obj_tresh.loadImagesCv()
  
     print("Morphologic filtering - opend and close:")
     printProgressBar(0, len(dLoader_obj.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
@@ -337,7 +398,7 @@ def main():
         printProgressBar(i + 1, len(dLoader_obj_tresh.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
     #########################################################################################################################
-    #CONTOURS
+    #CONTOURS - get rid of too small contours
 
     print("Filtering contours - chose hand contour:")
     dLoader_obj_binary = DataLoader("Processed/MorphFilter")   
@@ -358,7 +419,7 @@ def main():
         printProgressBar(i + 1, len(dLoader_obj_binary.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)  
 
     #########################################################################################################################
-    #Center and normalize 
+    # CENTER IMAGE (centroid of contour) - reshape to square
     # segmented hand - mask
 
     print("Center and normalize image (square shape):")
@@ -431,19 +492,19 @@ def main():
     for i in range(0,len(dLoader_obj_cont.imagesList_dir)):
         img = dLoader_obj_cont.loadImageCvGray(i)
         cnt = contoursList[i]
-        dict_adam = fe.getAdamFeatures(cnt,img) 
-        dict_adam['label'] = dLoader_obj_cont.dataset_array[i][0]
-        featuresList.append(dict_adam)
+        dict_features = fe.getHandMadeFeatures(cnt,img) 
+        dict_features['label'] = dLoader_obj_cont.dataset_array[i][0]
+        featuresList.append(dict_features)
         printProgressBar(i + 1, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
 
     #add features I to dataframe, save them to csv file
     df_features = pd.DataFrame(featuresList)
     project_path = os.getcwd()
-    path_csv = os.path.join(project_path, "CSV", "adam_features.csv") 
+    path_csv = os.path.join(project_path, "CSV", "handmade_features.csv") 
     df_features.to_csv(path_csv)
 
     #########################################################################################################################
-    #FEATURES IIa - hog (!long calc)
+    #FEATURES IIa - HOG - WARNING - takes long to calculate
     
     # print(" Features II - hog (grayscale images):")
     # hogFeaturesList = []    
@@ -466,7 +527,7 @@ def main():
 
 
     #########################################################################################################################
-    #FEATURES IIb - hog RGB (!long calc)
+    #FEATURES IIb - HOG - RGB images - WARNING - takes long to calculate
 
     # dLoader_obj_rgbmasked = DataLoader("Processed/CutoutRGB")   
     # dLoader_obj_rgbmasked.describeLoadedDataPNG()
@@ -492,7 +553,7 @@ def main():
     # df_features2b.to_csv(path_csv_hog_rgb)   
 
     #########################################################################################################################
-    #FEATURES IIc - hog RGB - for square images
+    #FEATURES IIc - hog RGB images - squared and centered - WARNING - takes long to calculate
 
     # dLoader_obj_rgbmasked = DataLoader("Processed/CutoutRGB_square")   
     # dLoader_obj_rgbmasked.describeLoadedDataPNG()
@@ -511,14 +572,18 @@ def main():
     #     dp.save_image3(hog_img,dLoader_obj_rgbmasked.dataset_array[i],"HogRGB",outPut_dir,95,"png")
     #     printProgressBar(i + 1, len(dLoader_obj_rgbmasked.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
 
-    # #add features IIb to dataframe, save them to csv file
+    ##########################################################################################################################
+    # SAVE features II to file
+
+    # #add features II to dataframe, save them to csv file
     # df_features2b = pd.DataFrame(hogRGBFeaturesList)
     # project_path = os.getcwd()
     # path_csv_hog_rgb = os.path.join(project_path, "CSV", "hog_rgb_features_sqr.csv") 
     # df_features2b.to_csv(path_csv_hog_rgb)   
          
 
-    #hog calculation takes log for dataset so we read features from file
+    ### PREPARE LABELS AND LOAD FEATURES FROM FILE
+
     hogImgLabels = []    
     for i in range(0,len(dLoader_obj_cont.imagesList_dir)):
          hogImgLabels.append(dLoader_obj_cont.dataset_array[i][0])
@@ -555,3 +620,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

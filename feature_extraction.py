@@ -36,7 +36,7 @@ class FeatureExtraction:
         return trainFeatures, testFeatures 
 
     @staticmethod
-    def applyPCA_signle(features, varianceRetained=0.95):
+    def applyPCA_single(features, varianceRetained=0.95):
         scaler = StandardScaler()
         scaler.fit(features) # fit only for training data
 
@@ -84,7 +84,7 @@ class FeatureExtraction:
    
 
     @staticmethod
-    def getAdamFeatures(cnt, binary_image):
+    def getHandMadeFeatures(cnt, binary_image):
         features_dict = {}
         M = cv2.moments(cnt)
         
@@ -94,6 +94,7 @@ class FeatureExtraction:
         features_dict['centroid_x'] = c_x
         features_dict['centroid_y'] = c_y
         
+        # Areas
         hand_area = cv2.contourArea(cnt)
         features_dict['hand_area'] = hand_area
         hand_perimeter = cv2.arcLength(cnt, True)
