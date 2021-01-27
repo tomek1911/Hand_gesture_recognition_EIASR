@@ -232,6 +232,10 @@ def handDetRec(frame, key):
         return outputImage, outputClass
 
 def main():
+
+    ###########################
+    # INTERACTIVE  CLASSIFIER #
+    ###########################
     global pcaMatrix
     global svmModel
 
@@ -241,7 +245,11 @@ def main():
     cam = camera.Camera(method=handDetRec, args=[None, None])
     cam.initCameraLoop()
     return
-    
+
+    #######################
+    # SANDBOX DEVELOPMENT #
+    #######################
+
     print("ASL Hand Gestures Recgonition - Initialize")
     #Initialisation
     dLoader_obj = DataLoader("Data") # load dataset images directories
@@ -418,21 +426,21 @@ def main():
     dLoader_obj_cont.loadImagesCv() #wczytaj wszystkie zdjecia z folderu
     featuresList = []    
 
-    # printProgressBar(0, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
+    printProgressBar(0, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
-    # for i in range(0,len(dLoader_obj_cont.imagesList_dir)):
-    #     img = dLoader_obj_cont.loadImageCvGray(i)
-    #     cnt = contoursList[i]
-    #     dict_adam = fe.getAdamFeatures(cnt,img) 
-    #     dict_adam['label'] = dLoader_obj_cont.dataset_array[i][0]
-    #     featuresList.append(dict_adam)
-    #     printProgressBar(i + 1, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
+    for i in range(0,len(dLoader_obj_cont.imagesList_dir)):
+        img = dLoader_obj_cont.loadImageCvGray(i)
+        cnt = contoursList[i]
+        dict_adam = fe.getAdamFeatures(cnt,img) 
+        dict_adam['label'] = dLoader_obj_cont.dataset_array[i][0]
+        featuresList.append(dict_adam)
+        printProgressBar(i + 1, len(dLoader_obj_cont.imagesList_dir), prefix = 'Progress:', suffix = 'Complete', length = 50)   
 
-    # #add features I to dataframe, save them to csv file
-    # df_features = pd.DataFrame(featuresList)
-    # project_path = os.getcwd()
-    # path_csv = os.path.join(project_path, "CSV", "adam_features.csv") 
-    # df_features.to_csv(path_csv)
+    #add features I to dataframe, save them to csv file
+    df_features = pd.DataFrame(featuresList)
+    project_path = os.getcwd()
+    path_csv = os.path.join(project_path, "CSV", "adam_features.csv") 
+    df_features.to_csv(path_csv)
 
     #########################################################################################################################
     #FEATURES IIa - hog (!long calc)
@@ -536,9 +544,9 @@ def main():
     # CLASSIFICATION
     # k-NN classifier
 
-    # print("k-NN classifier, features I:")
-    # X, y = dc.getXyfromCSV(path_csv)
-    # dc.fitKnn(X,y,print_res=True)
+    print("k-NN classifier, features I:")
+    X, y = dc.getXyfromCSV(path_csv)
+    dc.fitKnn(X,y,print_res=True)
     
     # SVM classifier (<1min)
     print("SVM classifier, features II:")
